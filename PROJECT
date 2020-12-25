@@ -1,0 +1,13 @@
+domain: my.domain
+layout: go.kubebuilder.io/v3
+projectName: database-management-and-migration-operator
+repo: github.com/HubertStefanski/database-management-and-migration-operator
+resources:
+- crdVersion: v1
+  group: cache
+  kind: DBMMO
+  version: v1
+version: 3-alpha
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
