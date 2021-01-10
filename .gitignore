@@ -19,7 +19,22 @@ testbin/*
 !vendor/**/zz_generated.*
 
 # editor and IDE paraphernalia
-.idea
+# IntelliJ IDEA specific
+.idea/
+*.iml
 *.swp
 *.swo
 *~
+# VS Code
+.factorypath
+.vscode
+
+# MacOS Desktop Services Store files
+**/.DS_Store
+
+# Eclipse specific
+**/.project
+**/.settings/*
+**/.prefs
+**/.classpath
+/target/
