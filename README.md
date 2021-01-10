@@ -7,10 +7,17 @@ A simple Kubernetes Operator based on the Operator-SDK to manage and migrate dat
 - Running ***Kubernetes/Openshift*** cluster
 - Operator-SDK version ***v1.3.0***
 - Go version ***go1.15.2***
+
+## Container/Operator Image
+
+The Operator Image can be found at :
+
+ ***hubertstefanski/dbmmo:latest*** (hosted on hub.docker.com)
+
 ## (Warning)
 
 This Operator is heavily ***Work In Progress*** as part of a final year project for my bachelors computing degree.
-(I cannot accept outside help for the near future). However feel free to fork/clone this repo to your hearts content.
+(I cannot accept outside help for the near future). However, feel free to fork/clone this repo to your hearts content.
 
 ## Overview
 
