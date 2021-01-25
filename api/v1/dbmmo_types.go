@@ -28,8 +28,8 @@ type DBMMOSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of DBMMO. Edit DBMMO_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Size is the desired amount of replicas which the operator should have
+	Size int32 `json:"size"`
 }
 
 // DBMMOStatus defines the observed state of DBMMO

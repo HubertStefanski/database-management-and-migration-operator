@@ -18,13 +18,19 @@ package controllers
 
 import (
 	"context"
+	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/models"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	cachev1 "github.com/HubertStefanski/database-management-and-migration-operator/api/v1"
+	v1 "github.com/HubertStefanski/database-management-and-migration-operator/api/v1"
 )
 
 // DBMMOReconciler reconciles a DBMMO object
@@ -48,16 +54,84 @@ type DBMMOReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *DBMMOReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = r.Log.WithValues("dbmmo", req.NamespacedName)
-
-	// your logic here
-
+	ctx = context.Background()
+	log := r.Log.WithValues("dbmmo", req.NamespacedName)
+	//Fetch dbmmo instance
+	dbmmo := &v1.DBMMO{}
+	if err := r.Get(ctx, req.NamespacedName, dbmmo); err != nil {
+		if errors.IsNotFound(err) {
+			//Object not found, return and don't requeue
+			log.Info("DBMMO not found, ignoring")
+			return ctrl.Result{}, nil
+		}
+		log.Error(err, "Failed to get DBMMO")
+		return ctrl.Result{}, err
+	}
+	// Check if the deployment already exists
+	found := &appsv1.Deployment{}
+	err := r.Get(ctx, types.NamespacedName{Name: dbmmo.Name, Namespace: dbmmo.Namespace}, found)
+	// If the deployment doesn't exist, create a new one
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new deployment
+		dep := r.getDBMMODeployment(dbmmo)
+		log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+		err = r.Create(ctx, dep)
+		if err != nil {
+			log.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+			return ctrl.Result{}, err
+		}
+		// Deployment created successfully - return and requeue
+		return ctrl.Result{Requeue: true}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get Deployment")
+		return ctrl.Result{}, err
+	}
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *DBMMOReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&cachev1.DBMMO{}).
+		For(&v1.DBMMO{}).
 		Complete(r)
+}
+
+func (r *DBMMOReconciler) getDBMMODeployment(d *v1.DBMMO) *appsv1.Deployment {
+	labels := getDBMMOLabels(d.Name)
+	replicas := d.Spec.Size
+
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      d.Name,
+			Namespace: d.Namespace,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
+						Name:  models.OperatorName,
+						Image: models.OperatorImage + ":" + models.OperatorVersion,
+						//TODO
+						//Command: []string{},
+
+					},
+					},
+				},
+			},
+		},
+	}
+
+	return
+}
+
+func getDBMMOLabels(name string) map[string]string {
+	return map[string]string{"app": "dbmmo", "dbmmo_cr": name}
+
 }
