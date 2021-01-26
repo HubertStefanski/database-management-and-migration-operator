@@ -73,7 +73,10 @@ func (r *DBMMOReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	// If the deployment doesn't exist, create a new one
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new deployment
-		dep := r.getDBMMODeployment(dbmmo)
+		dep, err := r.getDeployment(dbmmo)
+		if err != nil {
+			log.Error(err, "Failed to get deployment")
+		}
 		log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 		err = r.Create(ctx, dep)
 		if err != nil {
@@ -96,8 +99,8 @@ func (r *DBMMOReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *DBMMOReconciler) getDBMMODeployment(d *v1.DBMMO) *appsv1.Deployment {
-	labels := getDBMMOLabels(d.Name)
+func (r *DBMMOReconciler) getDeployment(d *v1.DBMMO) (*appsv1.Deployment, error) {
+	labels := getLabels(d.Name)
 	replicas := d.Spec.Size
 
 	deployment := &appsv1.Deployment{
@@ -118,20 +121,28 @@ func (r *DBMMOReconciler) getDBMMODeployment(d *v1.DBMMO) *appsv1.Deployment {
 					Containers: []corev1.Container{{
 						Name:  models.OperatorName,
 						Image: models.OperatorImage + ":" + models.OperatorVersion,
-						//TODO
-						//Command: []string{},
-
 					},
 					},
 				},
 			},
 		},
 	}
-
-	return
+	// set the DBMMO instance as the owner and controller
+	if err := ctrl.SetControllerReference(d, deployment, r.Scheme); err != nil {
+		return nil, err
+	}
+	return deployment, nil
 }
 
-func getDBMMOLabels(name string) map[string]string {
+func getLabels(name string) map[string]string {
 	return map[string]string{"app": "dbmmo", "dbmmo_cr": name}
 
+}
+
+func (r *DBMMOReconciler) getPodNames(pods []corev1.Pod) []string {
+	var podNames []string
+	for _, pod := range pods {
+		podNames = append(podNames, pod.Name)
+	}
+	return podNames
 }
