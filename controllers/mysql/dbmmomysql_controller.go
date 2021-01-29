@@ -137,6 +137,7 @@ func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *
 	replicas := m.Spec.Size
 
 	dep := &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name,
 			Namespace: m.Namespace,
@@ -146,23 +147,47 @@ func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *
 			Selector: &metav1.LabelSelector{
 				MatchLabels: ls,
 			},
+			Strategy: appsv1.DeploymentStrategy{
+				Type:          constants.MysqlStrategyType,
+				RollingUpdate: nil,
+			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: ls,
 				},
 				Spec: corev1.PodSpec{
+					// TODO Implement me
+					//Volumes:        []corev1.{
+					//	Name:         "",
+					//	VolumeSource: corev1.VolumeSource{},
+					//},
 					Containers: []corev1.Container{{
-						Image:   constants.MysqlContainerImage,
-						Name:    constants.MysqlContainerName,
+						Image: constants.MysqlContainerImage,
+						Name:  constants.MysqlContainerName,
+						Env: []corev1.EnvVar{
+							{
+								Name:  constants.MysqlSecretEnvName,
+								Value: constants.MysqlSecretEnvVal,
+								// TODO add Secret here
+								//ValueFrom: nil,
+							},
+						},
 						Command: []string{"memcached", "-m=64", "-o", "modern", "-v"},
 						Ports: []corev1.ContainerPort{{
 							ContainerPort: constants.MysqlContainerPort,
 							Name:          constants.MysqlContainerPortName,
 						}},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      constants.MysqlVolumeMountName,
+								MountPath: constants.MysqlVolumeMountPath,
+							},
+						},
 					}},
 				},
 			},
 		},
+		Status: appsv1.DeploymentStatus{},
 	}
 	// Set Memcached instance as the owner and controller
 	_ = ctrl.SetControllerReference(m, dep, r.Scheme)
