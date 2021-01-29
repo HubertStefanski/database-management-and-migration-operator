@@ -1,11 +1,13 @@
 package controllers
 
 const (
-	// Operator/Project Constants
+	// Operator/Project Constants ---------------------------------------------
+
 	// OperatorName is the name of the operator
 	OperatorName = "dbmmo-operator"
 
-	// MYSQL Constants
+	// MYSQL Constants ---------------------------------------------
+
 	//MysqlServiceName is the default name of the mysql service
 	MysqlServiceName = "mysql-service"
 	//MysqlServicePort is the default port on which the service will run
@@ -22,7 +24,9 @@ const (
 	MysqlContainerName = "mysql-container"
 	//MysqlSecretEnvName is the default env var from which the mysql password will be retrieved
 	MysqlSecretEnvName = "MYSQL_ROOT_PASSWORD"
+
 	// TODO: refactor this to use a secret as opposed to envars
+
 	//MysqlSecretEnvVal is the default password with which mysql will be set up
 	MysqlSecretEnvVal = "password"
 	//MysqlContainerPort is the default port from which the container will run the app
@@ -35,14 +39,16 @@ const (
 	MysqlVolumeMountPath = "/var/lib/mysql"
 	//MysqlClaimName is the default volume claim name
 	MysqlClaimName = "mysql-pv-claim"
-	// MYSQL PV
+
+	// MYSQL PV ---------------------------------------------
+
 	// MysqlPVName is the default name of the private volume
 	MysqlPVName = "mysql-pv-volume"
 	// MysqlPVLabelType is the default deployment label
 	MysqlPVLabelType = "local"
 	// MysqlStorageClassName is the default storage class name
 	MysqlStorageClassName = "manual"
-	// 	MysqlCapacityStorage is the default storage capacity for the private volume
+	// MysqlCapacityStorage is the default storage capacity for the private volume
 	MysqlCapacityStorage = "20Gi"
 	// MysqlPVAccessModes is the default access mode for the private volume
 	MysqlPVAccessModes = "ReadWriteOnce"
@@ -51,5 +57,5 @@ const (
 	// MysqlResourceRequestStorage is the default resource requested from storage
 	MysqlResourceRequestStorage = "20Gi"
 
-	// Future DBs VV
+	// Future DBs VV ---------------------------------------------
 )
