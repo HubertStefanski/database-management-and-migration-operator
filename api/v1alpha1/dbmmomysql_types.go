@@ -28,12 +28,14 @@ type DBMMOMySQLSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of DBMMOMySQL. Edit DBMMOMySQL_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Size is the
+	Size int32 `json:"size,omitempty"`
 }
 
 // DBMMOMySQLStatus defines the observed state of DBMMOMySQL
 type DBMMOMySQLStatus struct {
+	Nodes []string `json:"nodes,omitempty"`
+
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }

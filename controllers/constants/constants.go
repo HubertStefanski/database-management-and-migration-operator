@@ -1,10 +1,13 @@
-package controllers
+package constants
 
 const (
 	// Operator/Project Constants ---------------------------------------------
 
 	// OperatorName is the name of the operator
 	OperatorName = "dbmmo-operator"
+
+	// MysqlControllerName is the name of the mysql controller
+	MysqlControllerName = "mysql-controller"
 
 	// MYSQL Constants ---------------------------------------------
 
