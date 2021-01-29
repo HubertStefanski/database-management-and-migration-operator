@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/mysql"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -32,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	cachev1 "github.com/HubertStefanski/database-management-and-migration-operator/api/v1"
+	cachev1alpha1 "github.com/HubertStefanski/database-management-and-migration-operator/api/v1alpha1"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers"
 	// +kubebuilder:scaffold:imports
 )
@@ -45,6 +47,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(cachev1.AddToScheme(scheme))
+	utilruntime.Must(cachev1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -84,6 +87,14 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "DBMMO")
+		os.Exit(1)
+	}
+	if err = (&mysql.DBMMOMySQLReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("DBMMOMySQL"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "DBMMOMySQL")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
