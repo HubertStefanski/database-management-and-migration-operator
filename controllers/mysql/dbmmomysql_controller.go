@@ -22,6 +22,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"reflect"
@@ -165,37 +166,37 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, err
 		}
 	}
-	//------------------------------------------------------------------------------------------------------------------
-	// Check if the service already exists, if not create a new one
+
+	// Check if the PV already exists, if not create a new one
 	foundPV := &corev1.PersistentVolume{}
 	err = r.Get(ctx, types.NamespacedName{Name: mysql.Name, Namespace: mysql.Namespace}, foundPV)
 	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
-		pv := r.getMysqlService(mysql)
-		log.Info("Creating a new PrivateVolume", "PrivateVolume.Namespace", pv.Namespace, "Service.Name", pv.Name)
+		// Define a new PersistentVolume
+		pv := r.getMysqlPv(mysql)
+		log.Info("Creating a new PersistentVolume", "PersistentVolume.Namespace", pv.Namespace, "PersistentVolume.Name", pv.Name)
 		err = r.Create(ctx, pv)
 		if err != nil {
-			log.Error(err, "Failed to create new PrivateVolume", "PrivateVolume.Namespace", pv.Namespace, "PrivateVolume.Name", pv.Name)
+			log.Error(err, "Failed to create new PersistentVolume", "PersistentVolume.Namespace", pv.Namespace, "PersistentVolume.Name", pv.Name)
 			return ctrl.Result{}, err
 		}
 		// PrivateVolume created successfully - return and requeue
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
-		log.Error(err, "Failed to get PrivateVolume")
+		log.Error(err, "Failed to get PersistentVolume")
 		return ctrl.Result{}, err
 	}
 
-	// Update the mysql status with the service names
-	// List the services for this mysql's deployment
+	// Update the mysql status with the pv names
+	// List the pvs for this mysql's deployment
 	pvList := &corev1.PersistentVolumeList{}
 	if err = r.List(ctx, pvList, listOpts...); err != nil {
-		log.Error(err, "Failed to list privateVolumes", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
+		log.Error(err, "Failed to list PersistentVolumes", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
 		return ctrl.Result{}, err
 	}
 	pvNames := getPvNames(pvList.Items)
 
-	// Update status.PrivateVolumes if needed
-	if !reflect.DeepEqual(pvNames, mysql.Status.Services) {
+	// Update status.PersistentVolume if needed
+	if !reflect.DeepEqual(pvNames, mysql.Status.PrivateVolumes) {
 		mysql.Status.PrivateVolumes = pvNames
 		err := r.Status().Update(ctx, mysql)
 		if err != nil {
@@ -224,6 +225,38 @@ func (r *DBMMOMySQLReconciler) getMysqlService(m *cachev1alpha1.DBMMOMySQL) *cor
 	// Set Mysql instance as the owner and controller
 	_ = ctrl.SetControllerReference(m, service, r.Scheme)
 	return service
+
+}
+
+// getMysqlPv returns the mysql PV object
+func (r *DBMMOMySQLReconciler) getMysqlPv(m *cachev1alpha1.DBMMOMySQL) *corev1.PersistentVolume {
+	pv := &corev1.PersistentVolume{
+		TypeMeta: metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.MysqlPVName,
+			Namespace: m.Namespace,
+			Labels:    getPvLabels(constants.MysqlName),
+		},
+		Spec: corev1.PersistentVolumeSpec{
+			Capacity: corev1.ResourceList{
+				corev1.ResourceName("storage"): resource.Quantity{
+					Format: constants.MysqlCapacityStorageTest,
+				},
+			},
+			PersistentVolumeSource: corev1.PersistentVolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{
+					Path: constants.MysqlPVHostPath,
+					//Type: &corev1.HostPathType(constants.MysqlPVLabelType),
+				},
+			},
+			AccessModes: []corev1.PersistentVolumeAccessMode{
+				constants.MysqlPVAccessModes,
+			},
+			StorageClassName: constants.MysqlStorageClassName,
+		},
+		Status: corev1.PersistentVolumeStatus{},
+	}
+	return pv
 
 }
 
@@ -296,7 +329,13 @@ func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *
 // getLabels returns the labels for selecting the resources
 // belonging to the given mysql CR name.
 func getLabels(name string) map[string]string {
-	return map[string]string{"app": constants.MysqlAppSelector, "mysql_cr": "mysql"}
+	return map[string]string{"app": constants.MysqlAppSelector, "mysql_cr": name}
+}
+
+// getPvLabels returns the labels for selecting the resources
+// belonging to the given mysql CR name.
+func getPvLabels(name string) map[string]string {
+	return map[string]string{"app": constants.MysqlAppSelector, "mysql_cr": name, "type": constants.MysqlPVLabelType}
 }
 
 // getPvNames returns the pv names of mysql

@@ -10,7 +10,8 @@ const (
 	MysqlControllerName = "mysql-controller"
 
 	// MYSQL Constants ---------------------------------------------
-
+	//MysqlName is the default name for mysql
+	MysqlName = "mysql"
 	//MysqlServiceName is the default name of the mysql service
 	MysqlServiceName = "mysql-service"
 	//MysqlServicePort is the default port on which the service will run
@@ -53,6 +54,8 @@ const (
 	MysqlStorageClassName = "manual"
 	// MysqlCapacityStorage is the default storage capacity for the private volume
 	MysqlCapacityStorage = "20Gi"
+	// MysqlCapacityStorageTest is the default storage capacity for the private volume, used for testing only
+	MysqlCapacityStorageTest = "2Gi"
 	// MysqlPVAccessModes is the default access mode for the private volume
 	MysqlPVAccessModes = "ReadWriteOnce"
 	// MysqlPVHostPath is the default path for the private volume host
