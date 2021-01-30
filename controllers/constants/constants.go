@@ -59,6 +59,9 @@ const (
 	MysqlPVHostPath = "/mnt/data"
 	// MysqlResourceRequestStorage is the default resource requested from storage
 	MysqlResourceRequestStorage = "20Gi"
+	// MysqlResourceRequestStorageTestSize is the default testing size
+	MysqlResourceRequestStorageTestSize = "2Gi"
+
 
 	// Future DBs VV ---------------------------------------------
 )

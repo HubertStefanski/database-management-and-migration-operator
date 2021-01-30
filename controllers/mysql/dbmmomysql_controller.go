@@ -105,7 +105,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{Requeue: true}, nil
 	}
 
-	// Update the Memcached status with the pod names
+	// Update the mysql status with the pod names
 	// List the pods for this mysql's deployment
 	podList := &corev1.PodList{}
 	listOpts := []client.ListOption{
@@ -113,7 +113,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		client.MatchingLabels(getLabels(mysql.Name)),
 	}
 	if err = r.List(ctx, podList, listOpts...); err != nil {
-		log.Error(err, "Failed to list pods", "Memcached.Namespace", mysql.Namespace, "Memcached.Name", mysql.Name)
+		log.Error(err, "Failed to list pods", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
 		return ctrl.Result{}, err
 	}
 	podNames := getPodNames(podList.Items)
@@ -123,12 +123,28 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		mysql.Status.Nodes = podNames
 		err := r.Status().Update(ctx, mysql)
 		if err != nil {
-			log.Error(err, "Failed to update Memcached status")
+			log.Error(err, "Failed to update Mysql status")
 			return ctrl.Result{}, err
 		}
 	}
-
+	
 	return ctrl.Result{}, nil
+}
+
+func (r *DBMMOMySQLReconciler) getMysqlService(m *cachev1alpha1.DBMMOMySQL) *corev1.Service {
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: constants.MysqlServiceName,
+		},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{
+				{
+					Port: constants.MysqlContainerPort,
+				},
+			},
+		},
+	}
+	return service
 }
 
 // getMysqlDeployment returns a mysql Deployment object
@@ -156,11 +172,16 @@ func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *
 					Labels: ls,
 				},
 				Spec: corev1.PodSpec{
-					// TODO Implement me
-					//Volumes:        []corev1.{
-					//	Name:         "",
-					//	VolumeSource: corev1.VolumeSource{},
-					//},
+					Volumes: []corev1.Volume{
+						{
+							Name: constants.MysqlPVName,
+							VolumeSource: corev1.VolumeSource{
+								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+									ClaimName: constants.MysqlClaimName,
+								},
+							},
+						},
+					},
 					Containers: []corev1.Container{{
 						Image: constants.MysqlContainerImage,
 						Name:  constants.MysqlContainerName,
@@ -172,7 +193,7 @@ func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *
 								//ValueFrom: nil,
 							},
 						},
-						Command: []string{"memcached", "-m=64", "-o", "modern", "-v"},
+						//Command: []string{"memcached", "-m=64", "-o", "modern", "-v"},
 						Ports: []corev1.ContainerPort{{
 							ContainerPort: constants.MysqlContainerPort,
 							Name:          constants.MysqlContainerPortName,
@@ -187,7 +208,6 @@ func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *
 				},
 			},
 		},
-		Status: appsv1.DeploymentStatus{},
 	}
 	// Set Memcached instance as the owner and controller
 	_ = ctrl.SetControllerReference(m, dep, r.Scheme)
