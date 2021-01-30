@@ -165,6 +165,44 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, err
 		}
 	}
+	//------------------------------------------------------------------------------------------------------------------
+	// Check if the service already exists, if not create a new one
+	foundPV := &corev1.PersistentVolume{}
+	err = r.Get(ctx, types.NamespacedName{Name: mysql.Name, Namespace: mysql.Namespace}, foundPV)
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new deployment
+		pv := r.getMysqlService(mysql)
+		log.Info("Creating a new PrivateVolume", "PrivateVolume.Namespace", pv.Namespace, "Service.Name", pv.Name)
+		err = r.Create(ctx, pv)
+		if err != nil {
+			log.Error(err, "Failed to create new PrivateVolume", "PrivateVolume.Namespace", pv.Namespace, "PrivateVolume.Name", pv.Name)
+			return ctrl.Result{}, err
+		}
+		// PrivateVolume created successfully - return and requeue
+		return ctrl.Result{Requeue: true}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get PrivateVolume")
+		return ctrl.Result{}, err
+	}
+
+	// Update the mysql status with the service names
+	// List the services for this mysql's deployment
+	pvList := &corev1.PersistentVolumeList{}
+	if err = r.List(ctx, pvList, listOpts...); err != nil {
+		log.Error(err, "Failed to list privateVolumes", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
+		return ctrl.Result{}, err
+	}
+	pvNames := getPvNames(pvList.Items)
+
+	// Update status.PrivateVolumes if needed
+	if !reflect.DeepEqual(pvNames, mysql.Status.Services) {
+		mysql.Status.PrivateVolumes = pvNames
+		err := r.Status().Update(ctx, mysql)
+		if err != nil {
+			log.Error(err, "Failed to update Mysql status")
+			return ctrl.Result{}, err
+		}
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -259,6 +297,15 @@ func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *
 // belonging to the given mysql CR name.
 func getLabels(name string) map[string]string {
 	return map[string]string{"app": constants.MysqlAppSelector, "mysql_cr": "mysql"}
+}
+
+// getPvNames returns the pv names of mysql
+func getPvNames(pvs []corev1.PersistentVolume) []string {
+	var persistentVolumesNames []string
+	for _, pv := range pvs {
+		persistentVolumesNames = append(persistentVolumesNames, pv.Name)
+	}
+	return persistentVolumesNames
 }
 
 // getPodNames returns the pod names of the array of pods passed in

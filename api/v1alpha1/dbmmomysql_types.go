@@ -34,8 +34,9 @@ type DBMMOMySQLSpec struct {
 
 // DBMMOMySQLStatus defines the observed state of DBMMOMySQL
 type DBMMOMySQLStatus struct {
-	Nodes    []string `json:"nodes,omitempty"`
-	Services []string `json:"services,omitempty"`
+	Nodes          []string `json:"nodes,omitempty"`
+	Services       []string `json:"services,omitempty"`
+	PrivateVolumes []string `json:"privateVolumes,omitempty"`
 
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
