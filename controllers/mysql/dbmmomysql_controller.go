@@ -62,7 +62,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	err := r.Get(ctx, req.NamespacedName, mysql)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
+			// Request object not foundDeployment, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
 			log.Info("dbmmomysql resource not found. Ignoring since object must be deleted")
@@ -74,8 +74,8 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	// Check if the deployment already exists, if not create a new one
-	found := &appsv1.Deployment{}
-	err = r.Get(ctx, types.NamespacedName{Name: mysql.Name, Namespace: mysql.Namespace}, found)
+	foundDeployment := &appsv1.Deployment{}
+	err = r.Get(ctx, types.NamespacedName{Name: mysql.Name, Namespace: mysql.Namespace}, foundDeployment)
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new deployment
 		dep := r.getMysqlDeployment(mysql)
@@ -94,11 +94,11 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// Ensure the deployment size is the same as the spec
 	size := mysql.Spec.Size
-	if *found.Spec.Replicas != size {
-		found.Spec.Replicas = &size
-		err = r.Update(ctx, found)
+	if *foundDeployment.Spec.Replicas != size {
+		foundDeployment.Spec.Replicas = &size
+		err = r.Update(ctx, foundDeployment)
 		if err != nil {
-			log.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+			log.Error(err, "Failed to update Deployment", "Deployment.Namespace", foundDeployment.Namespace, "Deployment.Name", foundDeployment.Name)
 			return ctrl.Result{}, err
 		}
 		// Spec updated - return and requeue
@@ -127,14 +127,53 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, err
 		}
 	}
-	
+
+	// Check if the service already exists, if not create a new one
+	foundService := &corev1.Service{}
+	err = r.Get(ctx, types.NamespacedName{Name: mysql.Name, Namespace: mysql.Namespace}, foundService)
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new deployment
+		service := r.getMysqlService(mysql)
+		log.Info("Creating a new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
+		err = r.Create(ctx, service)
+		if err != nil {
+			log.Error(err, "Failed to create new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
+			return ctrl.Result{}, err
+		}
+		// Service created successfully - return and requeue
+		return ctrl.Result{Requeue: true}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get Service")
+		return ctrl.Result{}, err
+	}
+
+	// Update the mysql status with the service names
+	// List the services for this mysql's deployment
+	serviceList := &corev1.ServiceList{}
+	if err = r.List(ctx, serviceList, listOpts...); err != nil {
+		log.Error(err, "Failed to list services", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
+		return ctrl.Result{}, err
+	}
+	serviceNames := getServiceNames(serviceList.Items)
+
+	// Update status.Nodes if needed
+	if !reflect.DeepEqual(serviceNames, mysql.Status.Services) {
+		mysql.Status.Nodes = serviceNames
+		err := r.Status().Update(ctx, mysql)
+		if err != nil {
+			log.Error(err, "Failed to update Mysql status")
+			return ctrl.Result{}, err
+		}
+	}
+
 	return ctrl.Result{}, nil
 }
 
 func (r *DBMMOMySQLReconciler) getMysqlService(m *cachev1alpha1.DBMMOMySQL) *corev1.Service {
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: constants.MysqlServiceName,
+			Name:      constants.MysqlServiceName,
+			Namespace: m.Namespace,
 		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
@@ -144,7 +183,10 @@ func (r *DBMMOMySQLReconciler) getMysqlService(m *cachev1alpha1.DBMMOMySQL) *cor
 			},
 		},
 	}
+	// Set Mysql instance as the owner and controller
+	_ = ctrl.SetControllerReference(m, service, r.Scheme)
 	return service
+
 }
 
 // getMysqlDeployment returns a mysql Deployment object
@@ -164,8 +206,7 @@ func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *
 				MatchLabels: ls,
 			},
 			Strategy: appsv1.DeploymentStrategy{
-				Type:          constants.MysqlStrategyType,
-				RollingUpdate: nil,
+				Type: constants.MysqlStrategyType,
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
@@ -209,7 +250,7 @@ func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *
 			},
 		},
 	}
-	// Set Memcached instance as the owner and controller
+	// Set Mysql instance as the owner and controller
 	_ = ctrl.SetControllerReference(m, dep, r.Scheme)
 	return dep
 }
@@ -227,6 +268,15 @@ func getPodNames(pods []corev1.Pod) []string {
 		podNames = append(podNames, pod.Name)
 	}
 	return podNames
+}
+
+// getServiceNames returns the pod names of the array of pods passed in
+func getServiceNames(services []corev1.Service) []string {
+	var serviceNames []string
+	for _, pod := range services {
+		serviceNames = append(serviceNames, pod.Name)
+	}
+	return serviceNames
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -62,6 +62,5 @@ const (
 	// MysqlResourceRequestStorageTestSize is the default testing size
 	MysqlResourceRequestStorageTestSize = "2Gi"
 
-
 	// Future DBs VV ---------------------------------------------
 )
