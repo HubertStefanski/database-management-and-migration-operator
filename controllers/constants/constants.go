@@ -10,6 +10,7 @@ const (
 	MysqlControllerName = "mysql-controller"
 
 	// MYSQL Constants ---------------------------------------------
+
 	//MysqlName is the default name for mysql
 	MysqlName = "mysql"
 	//MysqlServiceName is the default name of the mysql service

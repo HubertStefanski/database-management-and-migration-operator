@@ -111,8 +111,13 @@ func (in *DBMMOMySQLStatus) DeepCopyInto(out *DBMMOMySQLStatus) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.PrivateVolumes != nil {
-		in, out := &in.PrivateVolumes, &out.PrivateVolumes
+	if in.PersistentVolumes != nil {
+		in, out := &in.PersistentVolumes, &out.PersistentVolumes
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.PersistentVolumeClaims != nil {
+		in, out := &in.PersistentVolumeClaims, &out.PersistentVolumeClaims
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}

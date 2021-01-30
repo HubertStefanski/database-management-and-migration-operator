@@ -32,3 +32,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - cache.my.domain
+  resources:
+  - dbmmomysqls
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cache.my.domain
+  resources:
+  - dbmmomysqls/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cache.my.domain
+  resources:
+  - dbmmomysqls/status
+  verbs:
+  - get
+  - patch
+  - update

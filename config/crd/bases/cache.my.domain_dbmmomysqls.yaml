@@ -1,0 +1,76 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: dbmmomysqls.cache.my.domain
+spec:
+  group: cache.my.domain
+  names:
+    kind: DBMMOMySQL
+    listKind: DBMMOMySQLList
+    plural: dbmmomysqls
+    singular: dbmmomysql
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: DBMMOMySQL is the Schema for the dbmmomysqls API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: DBMMOMySQLSpec defines the desired state of DBMMOMySQL
+            properties:
+              size:
+                description: Size is the
+                format: int32
+                type: integer
+            type: object
+          status:
+            description: DBMMOMySQLStatus defines the observed state of DBMMOMySQL
+            properties:
+              nodes:
+                items:
+                  type: string
+                type: array
+              persistentVolumeClaimNames:
+                items:
+                  type: string
+                type: array
+              persistentVolumes:
+                items:
+                  type: string
+                type: array
+              services:
+                items:
+                  type: string
+                type: array
+            required:
+            - persistentVolumeClaimNames
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
