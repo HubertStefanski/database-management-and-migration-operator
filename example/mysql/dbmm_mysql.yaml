@@ -1,0 +1,8 @@
+apiVersion: cache.my.domain/v1alpha1
+kind: DBMMOMySQL
+metadata:
+  name: dbmmo-mysql
+  labels:
+    type: example
+spec:
+  size: 1

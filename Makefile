@@ -69,6 +69,10 @@ fmt:
 vet:
 	go vet ./...
 
+.PHONY: code/check
+code/check: fmt vet
+	golint ./...
+
 # Generate code
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."

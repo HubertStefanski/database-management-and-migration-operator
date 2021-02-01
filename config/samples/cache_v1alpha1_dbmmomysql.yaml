@@ -1,0 +1,7 @@
+apiVersion: cache.my.domain/v1alpha1
+kind: DBMMOMySQL
+metadata:
+  name: dbmmomysql-sample
+spec:
+  # Add fields here
+  foo: bar
