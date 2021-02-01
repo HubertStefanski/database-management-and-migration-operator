@@ -80,84 +80,8 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		client.MatchingLabels(getLabels(mysql.Name)),
 	}
 
-	// Check if the service already exists, if not create a new one
-	foundService := &corev1.Service{}
-	err = r.Get(ctx, types.NamespacedName{Name: mysql.Name, Namespace: mysql.Namespace}, foundService)
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
-		service := r.getMysqlService(mysql)
-		log.Info("Creating a new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
-		err = r.Create(ctx, service)
-		if err != nil {
-			log.Error(err, "Failed to create new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
-			return ctrl.Result{}, err
-		}
-		// Service created successfully - return and requeue
-		return ctrl.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get Service")
-		return ctrl.Result{}, err
-	}
-
-	// Update the mysql status with the service names
-	// List the services for this mysql's deployment
-	serviceList := &corev1.ServiceList{}
-	if err = r.List(ctx, serviceList, listOpts...); err != nil {
-		log.Error(err, "Failed to list services", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
-		return ctrl.Result{}, err
-	}
-	serviceNames := getServiceNames(serviceList.Items)
-
-	// Update status.Nodes if needed
-	if !reflect.DeepEqual(serviceNames, mysql.Status.Services) {
-		mysql.Status.Nodes = serviceNames
-		err := r.Status().Update(ctx, mysql)
-		if err != nil {
-			log.Error(err, "Failed to update Mysql status")
-			return ctrl.Result{}, err
-		}
-	}
-
-	// Check if the PV already exists, if not create a new one
-	foundPV := &corev1.PersistentVolume{}
-	err = r.Get(ctx, types.NamespacedName{Name: mysql.Name, Namespace: mysql.Namespace}, foundPV)
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new PersistentVolume
-		pv := r.getMysqlPv(mysql)
-		log.Info("Creating a new PersistentVolume", "PersistentVolume.Namespace", pv.Namespace, "PersistentVolume.Name", pv.Name)
-		err = r.Create(ctx, pv)
-		if err != nil {
-			log.Error(err, "Failed to create new PersistentVolume", "PersistentVolume.Namespace", pv.Namespace, "PersistentVolume.Name", pv.Name)
-			return ctrl.Result{}, err
-		}
-		// PrivateVolume created successfully - return and requeue
-		return ctrl.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get PersistentVolume")
-		return ctrl.Result{}, err
-	}
-
-	// Update the mysql status with the pv names
-	// List the pvs for this mysql's deployment
-	pvList := &corev1.PersistentVolumeList{}
-	if err = r.List(ctx, pvList, listOpts...); err != nil {
-		log.Error(err, "Failed to list PersistentVolumes", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
-		return ctrl.Result{}, err
-	}
-	pvNames := getPvNames(pvList.Items)
-
-	// Update status.PersistentVolume if needed
-	if !reflect.DeepEqual(pvNames, mysql.Status.PersistentVolumes) {
-		mysql.Status.PersistentVolumes = pvNames
-		err := r.Status().Update(ctx, mysql)
-		if err != nil {
-			log.Error(err, "Failed to update Mysql status")
-			return ctrl.Result{}, err
-		}
-	}
-
 	foundPVC := &corev1.PersistentVolumeClaim{}
-	err = r.Get(ctx, types.NamespacedName{Name: mysql.Name, Namespace: mysql.Namespace}, foundPVC)
+	err = r.Get(ctx, types.NamespacedName{Name: constants.MysqlClaimName, Namespace: mysql.Namespace}, foundPVC)
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new PersistentVolume
 		pvc := r.getMysqlPvc(mysql)
@@ -167,6 +91,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			log.Error(err, "Failed to create new PersistentVolumeClaim", "PersistentVolumeClaim.Namespace", pvc.Namespace, "PersistentVolumeClaim.Name", pvc.Name)
 			return ctrl.Result{}, err
 		}
+		log.Info("PersistentVolumeClaim created", "PersistentVolumeClaim.Namespace", pvc.Namespace, "PersistentVolumeClaim.Name", pvc.Name)
 		// PrivateVolume created successfully - return and requeue
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
@@ -192,9 +117,47 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, err
 		}
 	}
+
+	// Check if the service already exists, if not create a new one
+	foundService := &corev1.Service{}
+	if err := r.Get(ctx, types.NamespacedName{Name: constants.MysqlServiceName, Namespace: mysql.Namespace}, foundService); err != nil && errors.IsNotFound(err) {
+		// Define a new service
+		service := r.getMysqlService(mysql)
+		log.Info("Creating a new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
+		if err := r.Create(ctx, service); err != nil {
+			log.Error(err, "Failed to create new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
+			return ctrl.Result{}, err
+		}
+		log.Info("Service created", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
+		// Service created successfully - return and requeue
+		return ctrl.Result{Requeue: true}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get Service")
+		return ctrl.Result{}, err
+	}
+
+	// Update the mysql status with the service names
+	// List the services for this mysql's deployment
+	serviceList := &corev1.ServiceList{}
+	if err = r.List(ctx, serviceList, listOpts...); err != nil {
+		log.Error(err, "Failed to list services", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
+		return ctrl.Result{}, err
+	}
+	serviceNames := getServiceNames(serviceList.Items)
+
+	// Update status.Nodes if needed
+	if !reflect.DeepEqual(serviceNames, mysql.Status.Services) {
+		mysql.Status.Services = serviceNames
+		err := r.Status().Update(ctx, mysql)
+		if err != nil {
+			log.Error(err, "Failed to update Mysql status")
+			return ctrl.Result{}, err
+		}
+	}
+
 	// Check if the deployment already exists, if not create a new one
 	foundDeployment := &appsv1.Deployment{}
-	err = r.Get(ctx, types.NamespacedName{Name: mysql.Name, Namespace: mysql.Namespace}, foundDeployment)
+	err = r.Get(ctx, types.NamespacedName{Name: constants.MysqlDeploymentName, Namespace: mysql.Namespace}, foundDeployment)
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new deployment
 		dep := r.getMysqlDeployment(mysql)
@@ -204,6 +167,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			log.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 			return ctrl.Result{}, err
 		}
+		log.Info("Deployment created", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 		// Deployment created successfully - return and requeue
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
@@ -251,6 +215,7 @@ func (r *DBMMOMySQLReconciler) getMysqlService(m *cachev1alpha1.DBMMOMySQL) *cor
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.MysqlServiceName,
 			Namespace: m.Namespace,
+			Labels:    getLabels(m.Name),
 		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
@@ -267,8 +232,8 @@ func (r *DBMMOMySQLReconciler) getMysqlService(m *cachev1alpha1.DBMMOMySQL) *cor
 }
 
 func (r *DBMMOMySQLReconciler) getMysqlPvc(m *cachev1alpha1.DBMMOMySQL) *corev1.PersistentVolumeClaim {
-	var className = new(string)
-	*className = constants.MysqlStorageClassName
+	//var className = new(string)
+	//*className = constants.MysqlStorageClassName
 
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
@@ -282,52 +247,17 @@ func (r *DBMMOMySQLReconciler) getMysqlPvc(m *cachev1alpha1.DBMMOMySQL) *corev1.
 			Resources: corev1.ResourceRequirements{
 				Limits: nil,
 				Requests: corev1.ResourceList{
-					corev1.ResourceName("storage"): resource.Quantity{
-						Format: constants.MysqlResourceRequestStorageTestSize,
-					},
+					"storage": resource.MustParse(constants.MysqlCapacityStorageTest),
 				},
 			},
-			StorageClassName: className,
+			//TODO remove this after local development
+			//StorageClassName: className,
 		},
 		Status: corev1.PersistentVolumeClaimStatus{},
 	}
 	// Set Mysql instance as the owner and controller
 	_ = ctrl.SetControllerReference(m, pvc, r.Scheme)
 	return pvc
-}
-
-// getMysqlPv returns the mysql PV object
-func (r *DBMMOMySQLReconciler) getMysqlPv(m *cachev1alpha1.DBMMOMySQL) *corev1.PersistentVolume {
-	pv := &corev1.PersistentVolume{
-		TypeMeta: metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.MysqlPVName,
-			Namespace: m.Namespace,
-			Labels:    getPvLabels(constants.MysqlName),
-		},
-		Spec: corev1.PersistentVolumeSpec{
-			Capacity: corev1.ResourceList{
-				corev1.ResourceName("storage"): resource.Quantity{
-					Format: constants.MysqlCapacityStorageTest,
-				},
-			},
-			PersistentVolumeSource: corev1.PersistentVolumeSource{
-				HostPath: &corev1.HostPathVolumeSource{
-					Path: constants.MysqlPVHostPath,
-					//Type: &corev1.HostPathType(constants.MysqlPVLabelType),
-				},
-			},
-			AccessModes: []corev1.PersistentVolumeAccessMode{
-				constants.MysqlPVAccessModes,
-			},
-			StorageClassName: constants.MysqlStorageClassName,
-		},
-		Status: corev1.PersistentVolumeStatus{},
-	}
-	// Set Mysql instance as the owner and controller
-	_ = ctrl.SetControllerReference(m, pv, r.Scheme)
-	return pv
-
 }
 
 // getMysqlDeployment returns a mysql Deployment object
@@ -338,7 +268,7 @@ func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *
 	dep := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name,
+			Name:      constants.MysqlDeploymentName,
 			Namespace: m.Namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -356,7 +286,7 @@ func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *
 				Spec: corev1.PodSpec{
 					Volumes: []corev1.Volume{
 						{
-							Name: constants.MysqlPVName,
+							Name: constants.MysqlClaimName,
 							VolumeSource: corev1.VolumeSource{
 								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 									ClaimName: constants.MysqlClaimName,
@@ -365,8 +295,13 @@ func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *
 						},
 					},
 					Containers: []corev1.Container{{
-						Image: constants.MysqlContainerImage,
 						Name:  constants.MysqlContainerName,
+						Image: constants.MysqlContainerImage,
+						Ports: []corev1.ContainerPort{{
+							ContainerPort: constants.MysqlContainerPort,
+							Name:          constants.MysqlContainerPortName,
+						}},
+						EnvFrom: nil,
 						Env: []corev1.EnvVar{
 							{
 								Name:  constants.MysqlSecretEnvName,
@@ -375,22 +310,13 @@ func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *
 								//ValueFrom: nil,
 							},
 						},
-						//Command: []string{"memcached", "-m=64", "-o", "modern", "-v"},
-						Ports: []corev1.ContainerPort{{
-							ContainerPort: constants.MysqlContainerPort,
-							Name:          constants.MysqlContainerPortName,
-						}},
-						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      constants.MysqlVolumeMountName,
-								MountPath: constants.MysqlVolumeMountPath,
-							},
-						},
+						ImagePullPolicy: "IfNotPresent",
+					},
 					}},
-				},
 			},
 		},
 	}
+
 	// Set Mysql instance as the owner and controller
 	_ = ctrl.SetControllerReference(m, dep, r.Scheme)
 	return dep
@@ -400,12 +326,6 @@ func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *
 // belonging to the given mysql CR name.
 func getLabels(name string) map[string]string {
 	return map[string]string{"app": constants.MysqlAppSelector, "mysql_cr": name}
-}
-
-// getPvLabels returns the labels for selecting the resources
-// belonging to the given mysql CR name.
-func getPvLabels(name string) map[string]string {
-	return map[string]string{"app": constants.MysqlAppSelector, "mysql_cr": name, "type": constants.MysqlPVLabelType}
 }
 
 // getPvcNames returns the pv names of mysql
@@ -438,8 +358,8 @@ func getPodNames(pods []corev1.Pod) []string {
 // getServiceNames returns the pod names of the array of pods passed in
 func getServiceNames(services []corev1.Service) []string {
 	var serviceNames []string
-	for _, pod := range services {
-		serviceNames = append(serviceNames, pod.Name)
+	for _, service := range services {
+		serviceNames = append(serviceNames, service.Name)
 	}
 	return serviceNames
 }

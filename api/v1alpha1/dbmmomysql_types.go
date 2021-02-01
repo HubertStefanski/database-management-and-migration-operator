@@ -36,8 +36,7 @@ type DBMMOMySQLSpec struct {
 type DBMMOMySQLStatus struct {
 	Nodes                  []string `json:"nodes,omitempty"`
 	Services               []string `json:"services,omitempty"`
-	PersistentVolumes      []string `json:"persistentVolumes,omitempty"`
-	PersistentVolumeClaims []string `json:"persistentVolumeClaimNames"`
+	PersistentVolumeClaims []string `json:"persistentVolumeClaims,omitempty"`
 
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file

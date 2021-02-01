@@ -48,11 +48,7 @@ spec:
                 items:
                   type: string
                 type: array
-              persistentVolumeClaimNames:
-                items:
-                  type: string
-                type: array
-              persistentVolumes:
+              persistentVolumeClaims:
                 items:
                   type: string
                 type: array
@@ -60,8 +56,6 @@ spec:
                 items:
                   type: string
                 type: array
-            required:
-            - persistentVolumeClaimNames
             type: object
         type: object
     served: true
