@@ -23,6 +23,10 @@ This Operator is heavily ***Work In Progress*** as part of a final year project 
 
 ![Operator Overview](documentation/images/operator-overview.png)
 
+## Current functionality
+- Hard coded (non-configurable) installation of MySQL Service, Deployment and PersistentVolumeClaim (Update & Delete TBA)
+ - Can be deployed
+
 ## Planned functionality
 
 - Local database management and provisioning for MySQL(on-cluster)
@@ -35,11 +39,16 @@ This Operator is heavily ***Work In Progress*** as part of a final year project 
 
 ### Local
 
+Currently able to create a deployment, mysql pod, service and privatevolume claim
+
 Prepare the cluster by generating all manifests/code and applying CRDs to the cluster:
 
  ```bash
  make install
  ```
+ 
+Apply the dbmmo_mysql resource with `oc apply -f example/mysql/dbmm_mysql.yaml -n <NAMESPACE>`
+
 
 Run the operator locally with
 
