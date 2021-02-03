@@ -88,41 +88,9 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return result, err
 	}
 
-	// Check if the service already exists, if not create a new one
-	foundService := &corev1.Service{}
-	if err := r.Get(ctx, types.NamespacedName{Name: constants.MysqlServiceName, Namespace: mysql.Namespace}, foundService); err != nil && errors.IsNotFound(err) {
-		// Define a new service
-		service := r.getMysqlService(mysql)
-		log.Info("Creating a new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
-		if err := r.Create(ctx, service); err != nil {
-			log.Error(err, "Failed to create new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
-			return ctrl.Result{}, err
-		}
-		log.Info("Service created", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
-		// Service created successfully - return and requeue
-		return ctrl.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get Service")
-		return ctrl.Result{}, err
-	}
-
-	// Update the mysql status with the service names
-	// List the services for this mysql's deployment
-	serviceList := &corev1.ServiceList{}
-	if err = r.List(ctx, serviceList, listOpts...); err != nil {
-		log.Error(err, "Failed to list services", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
-		return ctrl.Result{}, err
-	}
-	serviceNames := getServiceNames(serviceList.Items)
-
-	// Update status.Nodes if needed
-	if !reflect.DeepEqual(serviceNames, mysql.Status.Services) {
-		mysql.Status.Services = serviceNames
-		err := r.Status().Update(ctx, mysql)
-		if err != nil {
-			log.Error(err, "Failed to update Mysql status")
-			return ctrl.Result{}, err
-		}
+	result, err = r.reconcileMysqlService(ctx, mysql, listOpts)
+	if err != nil {
+		return result, err
 	}
 
 	// Check if the deployment already exists, if not create a new one
@@ -178,6 +146,47 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *DBMMOMySQLReconciler) reconcileMysqlService(ctx context.Context, m *cachev1alpha1.DBMMOMySQL, listOpts []client.ListOption) (ctrl.Result, error) {
+	// Check if the service already exists, if not create a new one
+	foundService := &corev1.Service{}
+	if err := r.Get(ctx, types.NamespacedName{Name: constants.MysqlServiceName, Namespace: m.Namespace}, foundService); err != nil && errors.IsNotFound(err) {
+		// Define a new service
+		service := r.getMysqlService(m)
+		r.Log.Info("Creating a new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
+		if err := r.Create(ctx, service); err != nil {
+			r.Log.Error(err, "Failed to create new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
+			return ctrl.Result{}, err
+		}
+		r.Log.Info("Service created", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
+		// Service created successfully - return and requeue
+		return ctrl.Result{Requeue: true}, nil
+	} else if err != nil {
+		r.Log.Error(err, "Failed to get Service")
+		return ctrl.Result{}, err
+	}
+
+	// Update the mysql status with the service names
+	// List the services for this mysql's deployment
+	serviceList := &corev1.ServiceList{}
+	if err := r.List(ctx, serviceList, listOpts...); err != nil {
+		r.Log.Error(err, "Failed to list services", "Mysql.Namespace", m.Namespace, "Mysql.Name", m.Name)
+		return ctrl.Result{}, err
+	}
+	serviceNames := getServiceNames(serviceList.Items)
+
+	// Update status.Nodes if needed
+	if !reflect.DeepEqual(serviceNames, m.Status.Services) {
+		m.Status.Services = serviceNames
+		err := r.Status().Update(ctx, m)
+		if err != nil {
+			r.Log.Error(err, "Failed to update Mysql status")
+			return ctrl.Result{}, err
+		}
+	}
+	return ctrl.Result{Requeue: true}, nil
+
 }
 
 func (r *DBMMOMySQLReconciler) reconcileMysqlPVC(ctx context.Context, m *cachev1alpha1.DBMMOMySQL, listOpts []client.ListOption) (ctrl.Result, error) {
