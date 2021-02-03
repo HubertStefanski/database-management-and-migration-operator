@@ -19,11 +19,10 @@ package mysql
 import (
 	"context"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/constants"
+	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/mysql/model"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"reflect"
 
@@ -80,7 +79,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// Create list options
 	listOpts := []client.ListOption{
 		client.InNamespace(mysql.Namespace),
-		client.MatchingLabels(getLabels(mysql.Name)),
+		client.MatchingLabels(model.GetLabels(mysql.Name)),
 	}
 
 	result, err = r.reconcileMysqlPVC(ctx, mysql, listOpts)
@@ -94,7 +93,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	result, err = r.reconcileMysqlDeployment(ctx, mysql, listOpts)
-	if err != nil{
+	if err != nil {
 		return result, err
 	}
 
@@ -110,7 +109,9 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlDeployment(ctx context.Context, mys
 	if err != nil && errors.IsNotFound(err) {
 
 		// Define a new deployment
-		dep := r.getMysqlDeployment(mysql)
+		dep := model.GetMysqlDeployment(mysql)
+		// Set Mysql instance as the owner and controller
+		_ = ctrl.SetControllerReference(mysql, dep, r.Scheme)
 
 		r.Log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 
@@ -149,7 +150,7 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlDeployment(ctx context.Context, mys
 		r.Log.Error(err, "Failed to list pods", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
 		return ctrl.Result{}, err
 	}
-	podNames := getPodNames(podList.Items)
+	podNames := model.GetPodNames(podList.Items)
 
 	// Update status.Nodes if needed
 	if !reflect.DeepEqual(podNames, mysql.Status.Nodes) {
@@ -169,7 +170,10 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlService(ctx context.Context, m *cac
 	foundService := &corev1.Service{}
 	if err := r.Get(ctx, types.NamespacedName{Name: constants.MysqlServiceName, Namespace: m.Namespace}, foundService); err != nil && errors.IsNotFound(err) {
 		// Define a new service
-		service := r.getMysqlService(m)
+		service := model.GetMysqlService(m)
+
+		_ = ctrl.SetControllerReference(m, service, r.Scheme)
+
 		r.Log.Info("Creating a new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
 		if err := r.Create(ctx, service); err != nil {
 			r.Log.Error(err, "Failed to create new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
@@ -190,7 +194,7 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlService(ctx context.Context, m *cac
 		r.Log.Error(err, "Failed to list services", "Mysql.Namespace", m.Namespace, "Mysql.Name", m.Name)
 		return ctrl.Result{}, err
 	}
-	serviceNames := getServiceNames(serviceList.Items)
+	serviceNames := model.GetServiceNames(serviceList.Items)
 
 	// Update status.Nodes if needed
 	if !reflect.DeepEqual(serviceNames, m.Status.Services) {
@@ -210,7 +214,9 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlPVC(ctx context.Context, m *cachev1
 	err := r.Get(ctx, types.NamespacedName{Name: constants.MysqlClaimName, Namespace: m.Namespace}, foundPVC)
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new PersistentVolume
-		pvc := r.getMysqlPvc(m)
+		pvc := model.GetMysqlPvc(m)
+
+		_ = ctrl.SetControllerReference(m, pvc, r.Scheme)
 		r.Log.Info("Creating a new PersistentVolumeClaim", "PersistentVolumeClaim.Namespace", pvc.Namespace, "PersistentVolumeClaim.Name", pvc.Name)
 		if err = r.Create(ctx, pvc); err != nil {
 			r.Log.Error(err, "Failed to create new PersistentVolumeClaim", "PersistentVolumeClaim.Namespace", pvc.Namespace, "PersistentVolumeClaim.Name", pvc.Name)
@@ -233,7 +239,7 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlPVC(ctx context.Context, m *cachev1
 		r.Log.Error(err, "Failed to list PersistentVolumeClaim", "Mysql.Namespace", m.Namespace, "Mysql.Name", m.Name)
 		return ctrl.Result{}, err
 	}
-	pvcNames := getPvcNames(pvcList.Items)
+	pvcNames := model.GetPvcNames(pvcList.Items)
 
 	// Update status.PersistentVolume if needed
 	if !reflect.DeepEqual(pvcNames, m.Status.PersistentVolumeClaims) {
@@ -246,160 +252,6 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlPVC(ctx context.Context, m *cachev1
 	}
 
 	return ctrl.Result{Requeue: true}, nil
-}
-
-func (r *DBMMOMySQLReconciler) getMysqlService(m *cachev1alpha1.DBMMOMySQL) *corev1.Service {
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.MysqlServiceName,
-			Namespace: m.Namespace,
-			Labels:    getLabels(m.Name),
-		},
-		Spec: corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{
-				{
-					Port: constants.MysqlContainerPort,
-				},
-			},
-		},
-	}
-	// Set Mysql instance as the owner and controller
-	_ = ctrl.SetControllerReference(m, service, r.Scheme)
-	return service
-
-}
-
-func (r *DBMMOMySQLReconciler) getMysqlPvc(m *cachev1alpha1.DBMMOMySQL) *corev1.PersistentVolumeClaim {
-	//var className = new(string)
-	//*className = constants.MysqlStorageClassName
-
-	pvc := &corev1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.MysqlClaimName,
-			Namespace: m.Namespace,
-		},
-		Spec: corev1.PersistentVolumeClaimSpec{
-			AccessModes: []corev1.PersistentVolumeAccessMode{
-				constants.MysqlPVAccessModes,
-			},
-			Resources: corev1.ResourceRequirements{
-				Limits: nil,
-				Requests: corev1.ResourceList{
-					"storage": resource.MustParse(constants.MysqlCapacityStorageTest),
-				},
-			},
-			//TODO remove this after local development
-			//StorageClassName: className,
-		},
-		Status: corev1.PersistentVolumeClaimStatus{},
-	}
-	// Set Mysql instance as the owner and controller
-	_ = ctrl.SetControllerReference(m, pvc, r.Scheme)
-	return pvc
-}
-
-// getMysqlDeployment returns a mysql Deployment object
-func (r *DBMMOMySQLReconciler) getMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *appsv1.Deployment {
-	ls := getLabels(m.Name)
-	replicas := m.Spec.Size
-
-	dep := &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.MysqlDeploymentName,
-			Namespace: m.Namespace,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: ls,
-			},
-			Strategy: appsv1.DeploymentStrategy{
-				Type: constants.MysqlStrategyType,
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: ls,
-				},
-				Spec: corev1.PodSpec{
-					Volumes: []corev1.Volume{
-						{
-							Name: constants.MysqlClaimName,
-							VolumeSource: corev1.VolumeSource{
-								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-									ClaimName: constants.MysqlClaimName,
-								},
-							},
-						},
-					},
-					Containers: []corev1.Container{{
-						Name:  constants.MysqlContainerName,
-						Image: constants.MysqlContainerImage,
-						Ports: []corev1.ContainerPort{{
-							ContainerPort: constants.MysqlContainerPort,
-							Name:          constants.MysqlContainerPortName,
-						}},
-						EnvFrom: nil,
-						Env: []corev1.EnvVar{
-							{
-								Name:  constants.MysqlSecretEnvName,
-								Value: constants.MysqlSecretEnvVal,
-								// TODO add Secret here
-								//ValueFrom: nil,
-							},
-						},
-						ImagePullPolicy: "IfNotPresent",
-					},
-					}},
-			},
-		},
-	}
-
-	// Set Mysql instance as the owner and controller
-	_ = ctrl.SetControllerReference(m, dep, r.Scheme)
-	return dep
-}
-
-// getLabels returns the labels for selecting the resources
-// belonging to the given mysql CR name.
-func getLabels(name string) map[string]string {
-	return map[string]string{"app": constants.MysqlAppSelector, "mysql_cr": name}
-}
-
-// getPvcNames returns the pv names of mysql
-func getPvcNames(pvcs []corev1.PersistentVolumeClaim) []string {
-	var persistentVolumesClaimNames []string
-	for _, pvc := range pvcs {
-		persistentVolumesClaimNames = append(persistentVolumesClaimNames, pvc.Name)
-	}
-	return persistentVolumesClaimNames
-}
-
-// getPvNames returns the pv names of mysql
-func getPvNames(pvs []corev1.PersistentVolume) []string {
-	var persistentVolumesNames []string
-	for _, pv := range pvs {
-		persistentVolumesNames = append(persistentVolumesNames, pv.Name)
-	}
-	return persistentVolumesNames
-}
-
-// getPodNames returns the pod names of the array of pods passed in
-func getPodNames(pods []corev1.Pod) []string {
-	var podNames []string
-	for _, pod := range pods {
-		podNames = append(podNames, pod.Name)
-	}
-	return podNames
-}
-
-// getServiceNames returns the pod names of the array of pods passed in
-func getServiceNames(services []corev1.Service) []string {
-	var serviceNames []string
-	for _, service := range services {
-		serviceNames = append(serviceNames, service.Name)
-	}
-	return serviceNames
 }
 
 // SetupWithManager sets up the controller with the Manager.
