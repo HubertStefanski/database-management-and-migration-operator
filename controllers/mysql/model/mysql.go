@@ -58,13 +58,6 @@ func GetMysqlService(m *cachev1alpha1.DBMMOMySQL) *corev1.Service {
 			Namespace: m.Namespace,
 			Labels:    GetLabels(m.Name),
 		},
-		Spec: corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{
-				{
-					Port: constants.MysqlContainerPort,
-				},
-			},
-		},
 	}
 	// Set Mysql instance as the owner and controller
 	return service

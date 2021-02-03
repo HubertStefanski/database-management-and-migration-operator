@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -38,7 +39,7 @@ import (
 
 // DBMMOMySQLReconciler reconciles a DBMMOMySQL object
 type DBMMOMySQLReconciler struct {
-	client client.Client
+	Client client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
@@ -63,7 +64,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// Fetch the Memcached instance
 	mysql := &cachev1alpha1.DBMMOMySQL{}
 	result := ctrl.Result{}
-	err := r.client.Get(ctx, req.NamespacedName, mysql)
+	err := r.Client.Get(ctx, req.NamespacedName, mysql)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not foundDeployment, could have been deleted after reconcile request.
@@ -102,12 +103,11 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
-
-func (r *DBMMOMySQLReconciler) reconcileMysqlStatus(ctx context.Context, mysql *cachev1alpha1.DBMMOMySQL, listOpts []client.ListOption) (ctrl.Result, error)  {
+func (r *DBMMOMySQLReconciler) reconcileMysqlStatus(ctx context.Context, mysql *cachev1alpha1.DBMMOMySQL, listOpts []client.ListOption) (ctrl.Result, error) {
 	// Update the mysql status with the pod names
 	// List the pods for this mysql's deployment
 	podList := &corev1.PodList{}
-	if err := r.client.List(ctx, podList, listOpts...); err != nil {
+	if err := r.Client.List(ctx, podList, listOpts...); err != nil {
 		r.Log.Error(err, "Failed to list pods", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
 		return ctrl.Result{}, err
 	}
@@ -116,7 +116,26 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlStatus(ctx context.Context, mysql *
 	// Update status.Nodes if needed
 	if !reflect.DeepEqual(podNames, mysql.Status.Nodes) {
 		mysql.Status.Nodes = podNames
-		err := r.client.Status().Update(ctx, mysql)
+		err := r.Client.Status().Update(ctx, mysql)
+		if err != nil {
+			r.Log.Error(err, "Failed to update Mysql status")
+			return ctrl.Result{}, err
+		}
+	}
+
+	// Update the mysql status with the service names
+	// List the services for this mysql's deployment
+	serviceList := &corev1.ServiceList{}
+	if err := r.Client.List(ctx, serviceList, listOpts...); err != nil {
+		r.Log.Error(err, "Failed to list services", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
+		return ctrl.Result{}, err
+	}
+	serviceNames := model.GetServiceNames(serviceList.Items)
+
+	// Update status.Nodes if needed
+	if !reflect.DeepEqual(serviceNames, mysql.Status.Services) {
+		mysql.Status.Services = serviceNames
+		err := r.Client.Status().Update(ctx, mysql)
 		if err != nil {
 			r.Log.Error(err, "Failed to update Mysql status")
 			return ctrl.Result{}, err
@@ -134,8 +153,8 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlDeployment(ctx context.Context, mys
 	// Set Mysql instance as the owner and controller
 	_ = ctrl.SetControllerReference(mysql, dep, r.Scheme)
 
-	_, err := controllerutil.CreateOrUpdate(ctx, r.client, dep, func() error {
-		r.Log.Info("Reconciling deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+	r.Log.Info("Reconciling deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, dep, func() error {
 		dep.Spec = appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
@@ -191,59 +210,43 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlDeployment(ctx context.Context, mys
 }
 
 func (r *DBMMOMySQLReconciler) reconcileMysqlService(ctx context.Context, m *cachev1alpha1.DBMMOMySQL, listOpts []client.ListOption) (ctrl.Result, error) {
-	// Check if the service already exists, if not create a new one
-	foundService := &corev1.Service{}
-	if err := r.client.Get(ctx, types.NamespacedName{Name: constants.MysqlServiceName, Namespace: m.Namespace}, foundService); err != nil && errors.IsNotFound(err) {
-		// Define a new service
-		service := model.GetMysqlService(m)
+	// Define a new service
+	service := model.GetMysqlService(m)
 
-		_ = ctrl.SetControllerReference(m, service, r.Scheme)
+	_ = ctrl.SetControllerReference(m, service, r.Scheme)
 
-		r.Log.Info("Creating a new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
-		if err := r.client.Create(ctx, service); err != nil {
-			r.Log.Error(err, "Failed to create new Service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
-			return ctrl.Result{}, err
+	r.Log.Info("Reconciling service", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, service, func() error {
+		service.Spec.Ports = []corev1.ServicePort{
+			{
+				Name:       constants.MysqlContainerPortName,
+				Port:       constants.MysqlContainerPort,
+				Protocol:   corev1.ProtocolTCP,
+				TargetPort: intstr.FromString(constants.MysqlContainerPortName),
+			},
 		}
-		r.Log.Info("Service created", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
-		// Service created successfully - return and requeue
-		return ctrl.Result{Requeue: true}, nil
-	} else if err != nil {
-		r.Log.Error(err, "Failed to get Service")
+		return nil
+	})
+
+	if err != nil {
+		r.Log.Error(err, "Failed to reconcile Service", "Service.Namespace", service.Namespace, "service.Name", service.Name)
 		return ctrl.Result{}, err
 	}
 
-	// Update the mysql status with the service names
-	// List the services for this mysql's deployment
-	serviceList := &corev1.ServiceList{}
-	if err := r.client.List(ctx, serviceList, listOpts...); err != nil {
-		r.Log.Error(err, "Failed to list services", "Mysql.Namespace", m.Namespace, "Mysql.Name", m.Name)
-		return ctrl.Result{}, err
-	}
-	serviceNames := model.GetServiceNames(serviceList.Items)
-
-	// Update status.Nodes if needed
-	if !reflect.DeepEqual(serviceNames, m.Status.Services) {
-		m.Status.Services = serviceNames
-		err := r.client.Status().Update(ctx, m)
-		if err != nil {
-			r.Log.Error(err, "Failed to update Mysql status")
-			return ctrl.Result{}, err
-		}
-	}
 	return ctrl.Result{Requeue: true}, nil
 
 }
 
 func (r *DBMMOMySQLReconciler) reconcileMysqlPVC(ctx context.Context, m *cachev1alpha1.DBMMOMySQL, listOpts []client.ListOption) (ctrl.Result, error) {
 	foundPVC := &corev1.PersistentVolumeClaim{}
-	err := r.client.Get(ctx, types.NamespacedName{Name: constants.MysqlClaimName, Namespace: m.Namespace}, foundPVC)
+	err := r.Client.Get(ctx, types.NamespacedName{Name: constants.MysqlClaimName, Namespace: m.Namespace}, foundPVC)
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new PersistentVolume
 		pvc := model.GetMysqlPvc(m)
 
 		_ = ctrl.SetControllerReference(m, pvc, r.Scheme)
 		r.Log.Info("Creating a new PersistentVolumeClaim", "PersistentVolumeClaim.Namespace", pvc.Namespace, "PersistentVolumeClaim.Name", pvc.Name)
-		if err = r.client.Create(ctx, pvc); err != nil {
+		if err = r.Client.Create(ctx, pvc); err != nil {
 			r.Log.Error(err, "Failed to create new PersistentVolumeClaim", "PersistentVolumeClaim.Namespace", pvc.Namespace, "PersistentVolumeClaim.Name", pvc.Name)
 			return ctrl.Result{}, err
 		}
@@ -260,7 +263,7 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlPVC(ctx context.Context, m *cachev1
 	// Update the mysql status with the PersistentVolumeClaim names
 	// List the PersistentVolumeClaims for this mysql's deployment
 	pvcList := &corev1.PersistentVolumeClaimList{}
-	if err = r.client.List(ctx, pvcList, listOpts...); err != nil {
+	if err = r.Client.List(ctx, pvcList, listOpts...); err != nil {
 		r.Log.Error(err, "Failed to list PersistentVolumeClaim", "Mysql.Namespace", m.Namespace, "Mysql.Name", m.Name)
 		return ctrl.Result{}, err
 	}
@@ -269,7 +272,7 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlPVC(ctx context.Context, m *cachev1
 	// Update status.PersistentVolume if needed
 	if !reflect.DeepEqual(pvcNames, m.Status.PersistentVolumeClaims) {
 		m.Status.PersistentVolumeClaims = pvcNames
-		err := r.client.Status().Update(ctx, m)
+		err := r.Client.Status().Update(ctx, m)
 		if err != nil {
 			r.Log.Error(err, "Failed to update Mysql status")
 			return ctrl.Result{}, err
