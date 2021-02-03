@@ -11,58 +11,11 @@ import (
 
 // GetMysqlDeployment returns a mysql Deployment object
 func GetMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *appsv1.Deployment {
-	ls := GetLabels(m.Name)
-	replicas := m.Spec.Size
-
 	dep := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.MysqlDeploymentName,
 			Namespace: m.Namespace,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: ls,
-			},
-			Strategy: appsv1.DeploymentStrategy{
-				Type: constants.MysqlStrategyType,
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: ls,
-				},
-				Spec: corev1.PodSpec{
-					Volumes: []corev1.Volume{
-						{
-							Name: constants.MysqlClaimName,
-							VolumeSource: corev1.VolumeSource{
-								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-									ClaimName: constants.MysqlClaimName,
-								},
-							},
-						},
-					},
-					Containers: []corev1.Container{{
-						Name:  constants.MysqlContainerName,
-						Image: constants.MysqlContainerImage,
-						Ports: []corev1.ContainerPort{{
-							ContainerPort: constants.MysqlContainerPort,
-							Name:          constants.MysqlContainerPortName,
-						}},
-						EnvFrom: nil,
-						Env: []corev1.EnvVar{
-							{
-								Name:  constants.MysqlSecretEnvName,
-								Value: constants.MysqlSecretEnvVal,
-								// TODO add Secret here
-								//ValueFrom: nil,
-							},
-						},
-						ImagePullPolicy: "IfNotPresent",
-					},
-					}},
-			},
 		},
 	}
 	return dep
