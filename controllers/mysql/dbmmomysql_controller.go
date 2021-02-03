@@ -93,23 +93,39 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return result, err
 	}
 
+	result, err = r.reconcileMysqlDeployment(ctx, mysql, listOpts)
+	if err != nil{
+		return result, err
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *DBMMOMySQLReconciler) reconcileMysqlDeployment(ctx context.Context, mysql *cachev1alpha1.DBMMOMySQL, listOpts []client.ListOption) (ctrl.Result, error) {
 	// Check if the deployment already exists, if not create a new one
 	foundDeployment := &appsv1.Deployment{}
-	err = r.Get(ctx, types.NamespacedName{Name: constants.MysqlDeploymentName, Namespace: mysql.Namespace}, foundDeployment)
+
+	err := r.Get(ctx, types.NamespacedName{Name: constants.MysqlDeploymentName, Namespace: mysql.Namespace}, foundDeployment)
+
 	if err != nil && errors.IsNotFound(err) {
+
 		// Define a new deployment
 		dep := r.getMysqlDeployment(mysql)
-		log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+
+		r.Log.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+
 		err = r.Create(ctx, dep)
 		if err != nil {
-			log.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+			r.Log.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 			return ctrl.Result{}, err
 		}
-		log.Info("Deployment created", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+
+		r.Log.Info("Deployment created", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+
 		// Deployment created successfully - return and requeue
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
-		log.Error(err, "Failed to get Deployment")
+		r.Log.Error(err, "Failed to get Deployment")
 		return ctrl.Result{}, err
 	}
 
@@ -119,7 +135,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		foundDeployment.Spec.Replicas = &size
 		err = r.Update(ctx, foundDeployment)
 		if err != nil {
-			log.Error(err, "Failed to update Deployment", "Deployment.Namespace", foundDeployment.Namespace, "Deployment.Name", foundDeployment.Name)
+			r.Log.Error(err, "Failed to update Deployment", "Deployment.Namespace", foundDeployment.Namespace, "Deployment.Name", foundDeployment.Name)
 			return ctrl.Result{}, err
 		}
 		// Spec updated - return and requeue
@@ -130,7 +146,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// List the pods for this mysql's deployment
 	podList := &corev1.PodList{}
 	if err = r.List(ctx, podList, listOpts...); err != nil {
-		log.Error(err, "Failed to list pods", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
+		r.Log.Error(err, "Failed to list pods", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
 		return ctrl.Result{}, err
 	}
 	podNames := getPodNames(podList.Items)
@@ -140,12 +156,12 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		mysql.Status.Nodes = podNames
 		err := r.Status().Update(ctx, mysql)
 		if err != nil {
-			log.Error(err, "Failed to update Mysql status")
+			r.Log.Error(err, "Failed to update Mysql status")
 			return ctrl.Result{}, err
 		}
 	}
 
-	return ctrl.Result{}, nil
+	return ctrl.Result{Requeue: true}, nil
 }
 
 func (r *DBMMOMySQLReconciler) reconcileMysqlService(ctx context.Context, m *cachev1alpha1.DBMMOMySQL, listOpts []client.ListOption) (ctrl.Result, error) {
