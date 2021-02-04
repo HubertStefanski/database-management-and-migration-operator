@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?=v0.0.1
+VERSION ?=v0.1.0
 # Default bundle image tag
 BUNDLE_IMG ?= dbmmo-bundle:$(VERSION)
 # Options for 'bundle-build'
