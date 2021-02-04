@@ -5,7 +5,6 @@ import (
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/constants"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -31,21 +30,8 @@ func GetMysqlPvc(m *cachev1alpha1.DBMMOMySQL) *corev1.PersistentVolumeClaim {
 			Name:      constants.MysqlClaimName,
 			Namespace: m.Namespace,
 		},
-		Spec: corev1.PersistentVolumeClaimSpec{
-			AccessModes: []corev1.PersistentVolumeAccessMode{
-				constants.MysqlPVAccessModes,
-			},
-			Resources: corev1.ResourceRequirements{
-				Limits: nil,
-				Requests: corev1.ResourceList{
-					"storage": resource.MustParse(constants.MysqlCapacityStorageTest),
-				},
-			},
-			//TODO remove this after local development
-			//StorageClassName: className,
-		},
-		Status: corev1.PersistentVolumeClaimStatus{},
 	}
+
 	// Set Mysql instance as the owner and controller
 	return pvc
 }
