@@ -19,7 +19,7 @@ package mysql
 import (
 	"context"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/constants"
-	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/mysql/model"
+	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/model"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
