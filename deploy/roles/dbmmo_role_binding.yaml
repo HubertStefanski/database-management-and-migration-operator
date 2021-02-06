@@ -1,0 +1,11 @@
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: dbmm-operator
+subjects:
+  - kind: ServiceAccount
+    name: dbmm-operator
+roleRef:
+  kind: Role
+  name: dbmm-operator
+  apiGroup: rbac.authorization.k8s.io

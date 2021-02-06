@@ -34,7 +34,6 @@ import (
 
 	cachev1 "github.com/HubertStefanski/database-management-and-migration-operator/api/v1"
 	cachev1alpha1 "github.com/HubertStefanski/database-management-and-migration-operator/api/v1alpha1"
-	"github.com/HubertStefanski/database-management-and-migration-operator/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -78,15 +77,6 @@ func main() {
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
-	}
-
-	if err = (&controllers.DBMMOReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("DBMMO"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "DBMMO")
 		os.Exit(1)
 	}
 	if err = (&mysql.DBMMOMySQLReconciler{
