@@ -88,7 +88,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return result, err
 	}
 
-	if result, err := r.reconcileMysqlService(ctx, mysql, listOpts); err != nil {
+	if result, err := r.reconcileMysqlService(ctx, mysql); err != nil {
 		return result, err
 	}
 
@@ -230,7 +230,7 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlDeployment(ctx context.Context, mys
 	return ctrl.Result{Requeue: true}, nil
 }
 
-func (r *DBMMOMySQLReconciler) reconcileMysqlService(ctx context.Context, m *cachev1alpha1.DBMMOMySQL, listOpts []client.ListOption) (ctrl.Result, error) {
+func (r *DBMMOMySQLReconciler) reconcileMysqlService(ctx context.Context, m *cachev1alpha1.DBMMOMySQL) (ctrl.Result, error) {
 	// Define a new service
 	service := model.GetMysqlService(m)
 
@@ -261,8 +261,7 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlService(ctx context.Context, m *cac
 
 func (r *DBMMOMySQLReconciler) reconcileMysqlPVC(ctx context.Context, m *cachev1alpha1.DBMMOMySQL) (ctrl.Result, error) {
 	foundPVC := &corev1.PersistentVolumeClaim{}
-	err := r.Client.Get(ctx, types.NamespacedName{Name: constants.MysqlClaimName, Namespace: m.Namespace}, foundPVC)
-	if err != nil && errors.IsNotFound(err) {
+	if err := r.Client.Get(ctx, types.NamespacedName{Name: constants.MysqlClaimName, Namespace: m.Namespace}, foundPVC);err != nil && errors.IsNotFound(err) {
 		// Define a new PersistentVolume
 		pvc := model.GetMysqlPvc(m)
 		r.Log.Info("Reconciling PVC", "Pvc.Namespace", pvc.Namespace, "Pvc.Name", pvc.Name)
