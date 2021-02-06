@@ -18,7 +18,7 @@ const (
 	//MysqlServicePort is the default port on which the service will run
 	MysqlServicePort = 3306
 	//MysqlAppSelector is the label mapped to the `App:` label
-	MysqlAppSelector = "mysql"
+	MysqlAppSelector = "dbmmo-mysql"
 	//MysqlDeploymentName is the default name of the mysql deployment
 	MysqlDeploymentName = "mysql-deployment"
 	//MysqlStrategyType is the default deployment strategy
