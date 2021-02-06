@@ -63,7 +63,6 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// Fetch the Memcached instance
 	mysql := &cachev1alpha1.DBMMOMySQL{}
-	result := ctrl.Result{}
 	err := r.Client.Get(ctx, req.NamespacedName, mysql)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -75,7 +74,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 		// Error reading the object - requeue the request.
-		log.Error(err, "Failed to get dbmmomysql")
+		log.Error(err, "Failed to get dbmmomysql", "Request.namespacedName", req.NamespacedName)
 		return ctrl.Result{}, err
 	}
 
@@ -85,27 +84,29 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		client.MatchingLabels(model.GetLabels(mysql.Name)),
 	}
 
-	result, err = r.reconcileMysqlPVC(ctx, mysql, listOpts)
-	if err != nil {
+	if result, err := r.reconcileMysqlPVC(ctx, mysql); err != nil {
 		return result, err
 	}
 
-	result, err = r.reconcileMysqlService(ctx, mysql, listOpts)
-	if err != nil {
+	if result, err := r.reconcileMysqlService(ctx, mysql); err != nil {
 		return result, err
 	}
 
-	result, err = r.reconcileMysqlDeployment(ctx, mysql)
-	if err != nil {
+	if result, err := r.reconcileMysqlDeployment(ctx, mysql); err != nil {
 		return result, err
 	}
 
-	return ctrl.Result{}, nil
+	if result, err := r.reconcileMysqlStatus(ctx, mysql, listOpts); err != nil {
+		return result, err
+	}
+
+	return ctrl.Result{Requeue: true, RequeueAfter: constants.ReconcilerRequeueDelay}, nil
 }
 
 func (r *DBMMOMySQLReconciler) reconcileMysqlStatus(ctx context.Context, mysql *cachev1alpha1.DBMMOMySQL, listOpts []client.ListOption) (ctrl.Result, error) {
 	// Update the mysql status with the pod names
 	// List the pods for this mysql's deployment
+	r.Log.Info("Reconciling Mysql Status", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
 	podList := &corev1.PodList{}
 	if err := r.Client.List(ctx, podList, listOpts...); err != nil {
 		r.Log.Error(err, "Failed to list pods", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
@@ -118,7 +119,7 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlStatus(ctx context.Context, mysql *
 		mysql.Status.Nodes = podNames
 		err := r.Client.Status().Update(ctx, mysql)
 		if err != nil {
-			r.Log.Error(err, "Failed to update Mysql status")
+			r.Log.Error(err, "Failed to update Mysql status", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
 			return ctrl.Result{}, err
 		}
 	}
@@ -137,10 +138,29 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlStatus(ctx context.Context, mysql *
 		mysql.Status.Services = serviceNames
 		err := r.Client.Status().Update(ctx, mysql)
 		if err != nil {
-			r.Log.Error(err, "Failed to update Mysql status")
+			r.Log.Error(err, "Failed to update Mysql status", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
 			return ctrl.Result{}, err
 		}
 	}
+	// Update the mysql status with the PersistentVolumeClaim names
+	// List the PersistentVolumeClaims for this mysql's deployment
+	pvcList := &corev1.PersistentVolumeClaimList{}
+	if err := r.Client.List(ctx, pvcList, listOpts...); err != nil {
+		r.Log.Error(err, "Failed to list PersistentVolumeClaim", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
+		return ctrl.Result{}, err
+	}
+	pvcNames := model.GetPvcNames(pvcList.Items)
+
+	// Update status.PersistentVolume if needed
+	if !reflect.DeepEqual(pvcNames, mysql.Status.PersistentVolumeClaims) {
+		mysql.Status.PersistentVolumeClaims = pvcNames
+		err := r.Client.Status().Update(ctx, mysql)
+		if err != nil {
+			r.Log.Error(err, "Failed to update Mysql status", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
+			return ctrl.Result{}, err
+		}
+	}
+	r.Log.Info("Mysql status reconciled", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
 	return ctrl.Result{Requeue: true}, nil
 }
 
@@ -206,10 +226,11 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlDeployment(ctx context.Context, mys
 		return ctrl.Result{}, err
 	}
 
+	r.Log.Info("Deployment reconciled", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 	return ctrl.Result{Requeue: true}, nil
 }
 
-func (r *DBMMOMySQLReconciler) reconcileMysqlService(ctx context.Context, m *cachev1alpha1.DBMMOMySQL, listOpts []client.ListOption) (ctrl.Result, error) {
+func (r *DBMMOMySQLReconciler) reconcileMysqlService(ctx context.Context, m *cachev1alpha1.DBMMOMySQL) (ctrl.Result, error) {
 	// Define a new service
 	service := model.GetMysqlService(m)
 
@@ -233,17 +254,17 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlService(ctx context.Context, m *cac
 		return ctrl.Result{}, err
 	}
 
+	r.Log.Info("Service reconciled", "Service.Namespace", service.Namespace, "Service.Name", service.Name)
 	return ctrl.Result{Requeue: true}, nil
 
 }
 
-func (r *DBMMOMySQLReconciler) reconcileMysqlPVC(ctx context.Context, m *cachev1alpha1.DBMMOMySQL, listOpts []client.ListOption) (ctrl.Result, error) {
+func (r *DBMMOMySQLReconciler) reconcileMysqlPVC(ctx context.Context, m *cachev1alpha1.DBMMOMySQL) (ctrl.Result, error) {
 	foundPVC := &corev1.PersistentVolumeClaim{}
-	err := r.Client.Get(ctx, types.NamespacedName{Name: constants.MysqlClaimName, Namespace: m.Namespace}, foundPVC)
-	if err != nil && errors.IsNotFound(err) {
+	if err := r.Client.Get(ctx, types.NamespacedName{Name: constants.MysqlClaimName, Namespace: m.Namespace}, foundPVC);err != nil && errors.IsNotFound(err) {
 		// Define a new PersistentVolume
 		pvc := model.GetMysqlPvc(m)
-
+		r.Log.Info("Reconciling PVC", "Pvc.Namespace", pvc.Namespace, "Pvc.Name", pvc.Name)
 		_ = ctrl.SetControllerReference(m, pvc, r.Scheme)
 		r.Log.Info("Creating a new PersistentVolumeClaim", "PersistentVolumeClaim.Namespace", pvc.Namespace, "PersistentVolumeClaim.Name", pvc.Name)
 		if err = r.Client.Create(ctx, pvc); err != nil {
@@ -256,29 +277,10 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlPVC(ctx context.Context, m *cachev1
 		// PrivateVolume created successfully - return and requeue
 		return ctrl.Result{Requeue: true}, nil
 	} else if err != nil {
-		r.Log.Error(err, "Failed to get PersistentVolumeClaim")
+		r.Log.Error(err, "Failed to get PersistentVolumeClaim", "PersistentVolumeClaim.Namespace", foundPVC.Namespace, "PersistentVolumeClaim.Name", foundPVC.Name)
 		return ctrl.Result{}, err
 	}
-
-	// Update the mysql status with the PersistentVolumeClaim names
-	// List the PersistentVolumeClaims for this mysql's deployment
-	pvcList := &corev1.PersistentVolumeClaimList{}
-	if err = r.Client.List(ctx, pvcList, listOpts...); err != nil {
-		r.Log.Error(err, "Failed to list PersistentVolumeClaim", "Mysql.Namespace", m.Namespace, "Mysql.Name", m.Name)
-		return ctrl.Result{}, err
-	}
-	pvcNames := model.GetPvcNames(pvcList.Items)
-
-	// Update status.PersistentVolume if needed
-	if !reflect.DeepEqual(pvcNames, m.Status.PersistentVolumeClaims) {
-		m.Status.PersistentVolumeClaims = pvcNames
-		err := r.Client.Status().Update(ctx, m)
-		if err != nil {
-			r.Log.Error(err, "Failed to update Mysql status")
-			return ctrl.Result{}, err
-		}
-	}
-
+	r.Log.Info("PVC reconciled", "Pvc.Namespace", foundPVC.Namespace, "Pvc.Name", foundPVC.Name)
 	return ctrl.Result{Requeue: true}, nil
 }
 

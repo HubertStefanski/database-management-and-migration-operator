@@ -1,7 +1,12 @@
 package constants
 
+import "time"
+
 const (
 	// Operator/Project Constants ---------------------------------------------
+
+	// ReconcilerRequeueDelay is the time delay for controllers between reconcile loops
+	ReconcilerRequeueDelay = 20 * time.Second
 
 	// OperatorName is the name of the operator
 	OperatorName = "dbmmo-operator"
