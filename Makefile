@@ -1,5 +1,8 @@
 # Current Operator version
 VERSION ?=v0.1.0
+# Cluster namespace to be used for setting up the operator
+NAMESPACE ?="dbmmo-ns"
+
 # Default bundle image tag
 BUNDLE_IMG ?= dbmmo-bundle:$(VERSION)
 # Options for 'bundle-build'
@@ -121,3 +124,11 @@ bundle: manifests kustomize
 .PHONY: bundle-build
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+
+.PHONY: cluster/prepare/local
+cluster/prepare/local: install
+	-kubectl create namespace ${NAMESPACE}
+	@sed -i "s/__NAMESPACE__/${NAMESPACE}/g" deploy/cluster_roles/dbmmo_cluster_role_binding.yaml
+	kubectl apply -f deploy/roles -n ${NAMESPACE}
+	kubectl apply -f deploy/cluster_roles
+

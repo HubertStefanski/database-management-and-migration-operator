@@ -1,3 +1,4 @@
+---
 apiVersion: cache.my.domain/v1
 kind: DBMMO
 metadata:
