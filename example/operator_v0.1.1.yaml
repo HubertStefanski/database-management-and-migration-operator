@@ -18,7 +18,7 @@ spec:
       serviceAccountName: dbmm-operator
       containers:
         - name: dbmm-operator
-          image: hubertstefanski/dbmmo:v0.1.0
+          image: hubertstefanski/dbmmo:v0.1.1
           ports:
             - containerPort: 60000
               name: metrics
