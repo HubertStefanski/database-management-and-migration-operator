@@ -7,3 +7,4 @@ metadata:
     type: example
 spec:
   size: 1
+  deploymentType: "OnCluster"

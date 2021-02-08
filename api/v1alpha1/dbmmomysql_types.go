@@ -23,13 +23,19 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+// DBMMOMySQLDeploymentType is the type of deployment, either OnCluster or Azure (for now)
+//type DBMMOMySQLDeploymentType string
+
 // DBMMOMySQLSpec defines the desired state of DBMMOMySQL
 type DBMMOMySQLSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Size is the
+	// Size indicates the number of pods to be deployed
 	Size int32 `json:"size,omitempty"`
+
+	// DeploymentType indicates the type of database deployment that will be created from this CR, OnCluster or Azure
+	DeploymentType string `json:"deploymentType,omitempty"`
 }
 
 // DBMMOMySQLStatus defines the observed state of DBMMOMySQL
