@@ -246,6 +246,7 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlService(ctx context.Context, m *cac
 				TargetPort: intstr.FromString(constants.MysqlContainerPortName),
 			},
 		}
+		service.Spec.ClusterIP = corev1.ClusterIPNone
 		return nil
 	})
 
@@ -261,7 +262,7 @@ func (r *DBMMOMySQLReconciler) reconcileMysqlService(ctx context.Context, m *cac
 
 func (r *DBMMOMySQLReconciler) reconcileMysqlPVC(ctx context.Context, m *cachev1alpha1.DBMMOMySQL) (ctrl.Result, error) {
 	foundPVC := &corev1.PersistentVolumeClaim{}
-	if err := r.Client.Get(ctx, types.NamespacedName{Name: constants.MysqlClaimName, Namespace: m.Namespace}, foundPVC);err != nil && errors.IsNotFound(err) {
+	if err := r.Client.Get(ctx, types.NamespacedName{Name: constants.MysqlClaimName, Namespace: m.Namespace}, foundPVC); err != nil && errors.IsNotFound(err) {
 		// Define a new PersistentVolume
 		pvc := model.GetMysqlPvc(m)
 		r.Log.Info("Reconciling PVC", "Pvc.Namespace", pvc.Namespace, "Pvc.Name", pvc.Name)
