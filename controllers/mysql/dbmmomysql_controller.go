@@ -79,7 +79,8 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	if mysql.Spec.DeploymentType != "" {
-		if mysql.Spec.DeploymentType == constants.MysqlDeploymentTypeOnCluster {
+		switch depType := mysql.Spec.DeploymentType; depType {
+		case constants.MysqlDeploymentTypeOnCluster:
 			if result, err := r.onClusterReconcileMysqlPVC(ctx, mysql); err != nil {
 				return result, err
 			}
@@ -95,17 +96,21 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			if result, err := r.onClusterReconcileMysqlStatus(ctx, mysql, listOpts); err != nil {
 				return result, err
 			}
-		} else if mysql.Spec.DeploymentType == constants.MysqlDeploymentTypeAzure {
+		case constants.MysqlDeploymentTypeAzure:
 			r.Log.Info("Specified deployment type is not currently supported, please enter a supported type",
+				"DeploymentType", mysql.Spec.DeploymentType)
+		default:
+			r.Log.Error(fmt.Errorf("%v", "Unrecognized deployment type"), "ensure correct spelling or supported type",
 				"DeploymentType", mysql.Spec.DeploymentType)
 
 		}
 		return ctrl.Result{Requeue: true, RequeueAfter: constants.ReconcilerRequeueDelay}, nil
+	} else {
+		r.Log.Error(
+			fmt.Errorf("%v", "Spec.DeploymentType empty"),
+			"no deployment type selected",
+		)
 	}
-	r.Log.Error(
-		fmt.Errorf("%v", "Spec.DeploymentType empty"),
-		"no deployment type selected",
-	)
 	return ctrl.Result{Requeue: true, RequeueAfter: constants.ReconcilerRequeueDelay}, nil
 }
 
