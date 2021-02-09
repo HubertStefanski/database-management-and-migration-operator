@@ -25,11 +25,9 @@ This Operator is heavily ***Work In Progress*** as part of a final year project 
 
 ## Current functionality
 - Hard coded (non-configurable) installation of MySQL Service, Deployment and PersistentVolumeClaim (Update & Delete TBA)
- - Can be deployed
-
+- Local database management and provisioning for MySQL(on-cluster) accessible through service
 ## Planned functionality
 
-- Local database management and provisioning for MySQL(on-cluster)
 - Cloud database management and provisioning for Azure (to be expanded to GCP/AWS/etc in the future)
 - Data migration between environments (local-Azure / Azure-local etc.)
 - Expanded configuration for deployments (non-priority)
@@ -39,7 +37,7 @@ This Operator is heavily ***Work In Progress*** as part of a final year project 
 
 ### Local
 
-Currently able to create a deployment, mysql pod, service and privatevolume claim
+Currently able to create a Deployment, MySQL Pod, Service and Persistent Volume Claim
 
 Prepare the cluster by generating all manifests/code and applying CRDs to the cluster:
 
@@ -47,7 +45,10 @@ Prepare the cluster by generating all manifests/code and applying CRDs to the cl
  make install
  ```
  
-Apply the dbmmo_mysql resource with `oc apply -f example/mysql/dbmm_mysql.yaml -n <NAMESPACE>`
+Apply the dbmmo_mysql resource with 
+```bash
+kubectl apply -f example/mysql/dbmm_mysql.yaml -n <NAMESPACE>
+```
 
 
 Run the operator locally with
@@ -59,6 +60,17 @@ make run
 ```
 
 ### Deployment
+Prepare the cluster by running
+```bash
+make cluster/prepare/local NAMESPACE=<NAMESPACE>
+ ```
+This will create all necessary roles, service accounts, roles and bindings for the operator to be able to run as a deployment
 
-***TBA***
+Apply the operator deployment to the cluster with:
+
+***NOTE: Ensure that the operator is being deployed to the same namespace that was passed in the previous env var***
+
+```bash
+kubectl apply -f example/operator/operator_<version or latest>.yaml -n <NAMESPACE>
+```
 
