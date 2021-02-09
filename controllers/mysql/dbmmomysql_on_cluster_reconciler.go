@@ -7,7 +7,7 @@ import (
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/model"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -176,7 +176,7 @@ func (r *DBMMOMySQLReconciler) onClusterReconcileMysqlService(ctx context.Contex
 
 func (r *DBMMOMySQLReconciler) onClusterReconcileMysqlPVC(ctx context.Context, m *cachev1alpha1.DBMMOMySQL) (ctrl.Result, error) {
 	foundPVC := &corev1.PersistentVolumeClaim{}
-	if err := r.Client.Get(ctx, types.NamespacedName{Name: constants.MysqlClaimName, Namespace: m.Namespace}, foundPVC); err != nil && errors.IsNotFound(err) {
+	if err := r.Client.Get(ctx, types.NamespacedName{Name: constants.MysqlClaimName, Namespace: m.Namespace}, foundPVC); err != nil && k8serr.IsNotFound(err) {
 		// Define a new PersistentVolume
 		pvc := model.GetMysqlPvc(m)
 		r.Log.Info("Reconciling PVC", "Pvc.Namespace", pvc.Namespace, "Pvc.Name", pvc.Name)
@@ -197,4 +197,23 @@ func (r *DBMMOMySQLReconciler) onClusterReconcileMysqlPVC(ctx context.Context, m
 	}
 	r.Log.Info("PVC reconciled", "Pvc.Namespace", foundPVC.Namespace, "Pvc.Name", foundPVC.Name)
 	return ctrl.Result{Requeue: true}, nil
+}
+
+//OnClusterCleanup cleans up the resources for a specific Mysql object
+func (r *DBMMOMySQLReconciler) OnClusterCleanup(ctx context.Context, m *cachev1alpha1.DBMMOMySQL) (ctrl.Result, error) {
+	pvc := model.GetMysqlPvc(m)
+	if err := r.Client.Delete(ctx, pvc); err != nil && k8serr.IsNotFound(err) {
+		return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
+	}
+	svc := model.GetMysqlService(m)
+	if err := r.Client.Delete(ctx, svc); err != nil && k8serr.IsNotFound(err) {
+		return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
+	}
+	dep := model.GetMysqlDeployment(m)
+	if err := r.Client.Delete(ctx, dep); err != nil && k8serr.IsNotFound(err) {
+		return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
+	}
+
+	// Don't requeue if the cleanup was successful
+	return ctrl.Result{}, nil
 }
