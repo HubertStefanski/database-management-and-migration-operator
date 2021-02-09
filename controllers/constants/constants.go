@@ -16,6 +16,11 @@ const (
 
 	// MYSQL Constants ---------------------------------------------
 
+	// MysqlDeploymentTypeOnCluster Is the deployment type used to indicate that the database should be deployed on the same cluster as the operator
+	MysqlDeploymentTypeOnCluster = "OnCluster"
+	//MysqlDeploymentTypeAzure Is the deployment type used to indicate that the database should be deployed on azure
+	MysqlDeploymentTypeAzure = "Azure"
+
 	//MysqlName is the default name for mysql
 	MysqlName = "mysql"
 	//MysqlServiceName is the default name of the mysql service

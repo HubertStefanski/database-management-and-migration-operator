@@ -36,8 +36,12 @@ spec:
           spec:
             description: DBMMOMySQLSpec defines the desired state of DBMMOMySQL
             properties:
+              deploymentType:
+                description: DeploymentType indicates the type of database deployment
+                  that will be created from this CR, OnCluster or Azure
+                type: string
               size:
-                description: Size is the
+                description: Size indicates the number of pods to be deployed
                 format: int32
                 type: integer
             type: object
