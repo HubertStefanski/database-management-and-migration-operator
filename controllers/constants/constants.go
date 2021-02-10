@@ -11,6 +11,8 @@ const (
 	// ReconcilerRequeueDelay is the time delay for controllers between reconcile loops
 	ReconcilerRequeueDelay = 20 * time.Second
 
+	// Prefix is the prefix for all generated resources
+	Prefix = "dbmmo"
 	// OperatorName is the name of the operator
 	OperatorName = "dbmmo-operator"
 

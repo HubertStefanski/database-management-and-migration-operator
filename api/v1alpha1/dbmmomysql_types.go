@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -35,7 +36,13 @@ type DBMMOMySQLSpec struct {
 	Size int32 `json:"size,omitempty"`
 
 	// DeploymentType indicates the type of database deployment that will be created from this CR, OnCluster or Azure
-	DeploymentType string `json:"deploymentType,omitempty"`
+	DBMMOMYSQLDeployment *DBMMOMYSQLDeployment `json:"dbmmomysqlDeployment,omitempty"`
+}
+
+// DBMMOMYSQLDeployment defines the desired state of the mysqlDeployment
+type DBMMOMYSQLDeployment struct {
+	DeploymentType string             `json:"deploymentType,omitempty"`
+	EnvFrom        []v1.EnvFromSource `json:"envFrom,omitempty"`
 }
 
 // DBMMOMySQLStatus defines the observed state of DBMMOMySQL

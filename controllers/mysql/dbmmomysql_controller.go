@@ -78,8 +78,8 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		client.MatchingLabels(model.GetLabels(mysql.Name)),
 	}
 
-	if mysql.Spec.DeploymentType != "" {
-		switch depType := mysql.Spec.DeploymentType; depType {
+	if mysql.Spec.DBMMOMYSQLDeployment.DeploymentType != "" {
+		switch depType := mysql.Spec.DBMMOMYSQLDeployment.DeploymentType; depType {
 		case constants.MysqlDeploymentTypeOnCluster:
 			if result, err := r.onClusterReconcileMysqlPVC(ctx, mysql); err != nil {
 				return result, err
@@ -104,10 +104,10 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 		case constants.MysqlDeploymentTypeAzure:
 			r.Log.Info("Specified deployment type is not currently supported, please enter a supported type",
-				"DeploymentType", mysql.Spec.DeploymentType)
+				"DeploymentType", mysql.Spec.DBMMOMYSQLDeployment.DeploymentType)
 		default:
 			r.Log.Error(fmt.Errorf("%v", "Unrecognized deployment type"), "ensure correct spelling or supported type",
-				"DeploymentType", mysql.Spec.DeploymentType)
+				"DeploymentType", mysql.Spec.DBMMOMYSQLDeployment.DeploymentType)
 
 		}
 		return ctrl.Result{Requeue: true, RequeueAfter: constants.ReconcilerRequeueDelay}, nil
