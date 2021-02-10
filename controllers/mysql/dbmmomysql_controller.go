@@ -96,6 +96,12 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			if result, err := r.onClusterReconcileMysqlStatus(ctx, mysql, listOpts); err != nil {
 				return result, err
 			}
+			// If the object is being deleted then delete all sub resources
+			if mysql.DeletionTimestamp != nil {
+				if result, err := r.OnClusterCleanup(ctx, mysql); err != nil {
+					return result, err
+				}
+			}
 		case constants.MysqlDeploymentTypeAzure:
 			r.Log.Info("Specified deployment type is not currently supported, please enter a supported type",
 				"DeploymentType", mysql.Spec.DeploymentType)
@@ -105,12 +111,12 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 		}
 		return ctrl.Result{Requeue: true, RequeueAfter: constants.ReconcilerRequeueDelay}, nil
-	} else {
-		r.Log.Error(
-			fmt.Errorf("%v", "Spec.DeploymentType empty"),
-			"no deployment type selected",
-		)
 	}
+	r.Log.Error(
+		fmt.Errorf("%v", "Spec.DeploymentType empty"),
+		"no deployment type selected",
+	)
+
 	return ctrl.Result{Requeue: true, RequeueAfter: constants.ReconcilerRequeueDelay}, nil
 }
 

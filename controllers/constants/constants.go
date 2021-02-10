@@ -5,6 +5,9 @@ import "time"
 const (
 	// Operator/Project Constants ---------------------------------------------
 
+	//ReconcilerRequeueDelayOnFail is the time delay for controllers between failed reconcile loops
+	ReconcilerRequeueDelayOnFail = 5 * time.Second
+
 	// ReconcilerRequeueDelay is the time delay for controllers between reconcile loops
 	ReconcilerRequeueDelay = 20 * time.Second
 
