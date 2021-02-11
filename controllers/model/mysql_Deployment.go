@@ -8,8 +8,8 @@ import (
 // MysqlDeploymentGetEnvFrom returns the environment variables contained within a secret
 func MysqlDeploymentGetEnvFrom(m *v1alpha1.DBMMOMySQL) []v1.EnvFromSource {
 	var envFrom []v1.EnvFromSource
-	if m.Spec.DBMMOMYSQLDeployment != nil && m.Spec.DBMMOMYSQLDeployment.EnvFrom != nil {
-		for _, v := range m.Spec.DBMMOMYSQLDeployment.EnvFrom {
+	if m.Spec.Deployment != nil && m.Spec.Deployment.EnvFrom != nil {
+		for _, v := range m.Spec.Deployment.EnvFrom {
 			envFrom = append(envFrom, *v.DeepCopy())
 		}
 	}

@@ -23,25 +23,20 @@ import (
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// DBMMOMySQLDeploymentType is the type of deployment, either OnCluster or Azure (for now)
-//type DBMMOMySQLDeploymentType string
+// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+// Important: Run "make" to regenerate code after modifying this file
 
 // DBMMOMySQLSpec defines the desired state of DBMMOMySQL
 type DBMMOMySQLSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	// Size indicates the number of pods to be deployed
 	Size int32 `json:"size,omitempty"`
-
-	// DeploymentType indicates the type of database deployment that will be created from this CR, OnCluster or Azure
-	DBMMOMYSQLDeployment *DBMMOMYSQLDeployment `json:"dbmmomysqlDeployment,omitempty"`
+	// Deployment defines the desired state of the deployment for this resource
+	Deployment *DBMMOMYSQLDeployment `json:"deployment,omitempty"`
 }
 
 // DBMMOMYSQLDeployment defines the desired state of the mysqlDeployment
 type DBMMOMYSQLDeployment struct {
-	DeploymentType string             `json:"deploymentType,omitempty"`
+	DeploymentType *string            `json:"deploymentType,omitempty"`
 	EnvFrom        []v1.EnvFromSource `json:"envFrom,omitempty"`
 }
 
@@ -50,9 +45,6 @@ type DBMMOMySQLStatus struct {
 	Nodes                  []string `json:"nodes,omitempty"`
 	Services               []string `json:"services,omitempty"`
 	PersistentVolumeClaims []string `json:"persistentVolumeClaims,omitempty"`
-
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 }
 
 // +kubebuilder:object:root=true

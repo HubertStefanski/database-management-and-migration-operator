@@ -36,12 +36,48 @@ spec:
           spec:
             description: DBMMOMySQLSpec defines the desired state of DBMMOMySQL
             properties:
-              deploymentType:
-                description: DeploymentType indicates the type of database deployment
-                  that will be created from this CR, OnCluster or Azure
-                type: string
+              deployment:
+                description: DBMMOMYSQLDeployment defines the desired state of the
+                  mysqlDeployment
+                properties:
+                  deploymentType:
+                    type: string
+                  envFrom:
+                    items:
+                      description: EnvFromSource represents the source of a set of
+                        ConfigMaps
+                      properties:
+                        configMapRef:
+                          description: The ConfigMap to select from
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                TODO: Add other useful fields. apiVersion, kind, uid?'
+                              type: string
+                            optional:
+                              description: Specify whether the ConfigMap must be defined
+                              type: boolean
+                          type: object
+                        prefix:
+                          description: An optional identifier to prepend to each key
+                            in the ConfigMap. Must be a C_IDENTIFIER.
+                          type: string
+                        secretRef:
+                          description: The Secret to select from
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                TODO: Add other useful fields. apiVersion, kind, uid?'
+                              type: string
+                            optional:
+                              description: Specify whether the Secret must be defined
+                              type: boolean
+                          type: object
+                      type: object
+                    type: array
+                type: object
               size:
-                description: Size indicates the number of pods to be deployed
+                description: 'Size indicates the number of pods to be deployed'
                 format: int32
                 type: integer
             type: object

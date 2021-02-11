@@ -129,7 +129,10 @@ bundle-build:
 cluster/prepare/local: install
 	-kubectl create namespace ${NAMESPACE}
 	@sed -i "s/__NAMESPACE__/${NAMESPACE}/g" deploy/cluster_roles/dbmmo_cluster_role_binding.yaml
-	@sed -i "s/__NAMESPACE__/${NAMESPACE}/g" examples/mysql/dbmmo_mysql_secret.yaml
+	@sed -i "s/__NAMESPACE__/${NAMESPACE}/g" example/mysql/dbmmo_mysql_secret.yaml
+	# reset the var back to initial value
+	@sed -i "s/${NAMESPACE}/__NAMESPACE__/g" deploy/cluster_roles/dbmmo_cluster_role_binding.yaml
+	@sed -i "s/${NAMESPACE}/__NAMESPACE__/g" example/mysql/dbmmo_mysql_secret.yaml
 	kubectl apply -f deploy/roles -n ${NAMESPACE}
 	kubectl apply -f deploy/cluster_roles
 

@@ -10,5 +10,5 @@ spec:
   deployment:
     deploymentType: "OnCluster"
     envFrom:
-      -secretRef:
-        name: dbmmo-mysql-secret
+      - secretRef:
+          name: dbmmo-mysql-secret
