@@ -119,15 +119,7 @@ func (r *DBMMOMySQLReconciler) onClusterReconcileMysqlDeployment(ctx context.Con
 							ContainerPort: constants.MysqlContainerPort,
 							Name:          constants.MysqlContainerPortName,
 						}},
-						EnvFrom: nil,
-						Env: []corev1.EnvVar{
-							{
-								Name:  constants.MysqlSecretEnvName,
-								Value: constants.MysqlSecretEnvVal,
-								// TODO add Secret here
-								//ValueFrom: nil,
-							},
-						},
+						EnvFrom:         model.MysqlDeploymentGetEnvFrom(mysql),
 						ImagePullPolicy: "IfNotPresent",
 					},
 					}},

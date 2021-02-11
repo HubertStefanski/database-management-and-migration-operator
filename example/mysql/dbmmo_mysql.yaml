@@ -7,4 +7,8 @@ metadata:
     type: example
 spec:
   size: 1
-  deploymentType: "OnCluster"
+  deployment:
+    deploymentType: "OnCluster"
+    envFrom:
+      - secretRef:
+          name: dbmmo-mysql-secret

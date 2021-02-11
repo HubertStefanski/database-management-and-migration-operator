@@ -10,4 +10,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: dbmm-operator
-  namespace: dbmmo-ns
+  namespace: __NAMESPACE__
