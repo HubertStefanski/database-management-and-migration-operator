@@ -7,7 +7,7 @@ import (
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/model"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -199,18 +199,25 @@ func (r *DBMMOMySQLReconciler) onClusterReconcileIngress(ctx context.Context, my
 
 	r.Log.Info("Reconciling ingress", "Ingress.Namespace", ingr.Namespace, "Ingress.Name", ingr.Name)
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, ingr, func() error {
-		ingr.Spec = v1beta1.IngressSpec{
-			Rules: []v1beta1.IngressRule{
+		specific := netv1.PathTypePrefix
+		ingr.Spec = netv1.IngressSpec{
+			Rules: []netv1.IngressRule{
 				{
 					Host: constants.MysqlHostName,
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
+					IngressRuleValue: netv1.IngressRuleValue{
+						HTTP: &netv1.HTTPIngressRuleValue{
+							Paths: []netv1.HTTPIngressPath{
 								{
-									Path: constants.MysqlDefaultPath,
-									Backend: v1beta1.IngressBackend{
-										ServiceName: constants.MysqlServiceName,
-										ServicePort: intstr.FromInt(constants.MysqlTargetPort),
+									Path:     constants.MysqlDefaultPath,
+									PathType: &specific,
+									Backend: netv1.IngressBackend{
+										Service: &netv1.IngressServiceBackend{
+											Name: constants.MysqlServiceName,
+											Port: netv1.ServiceBackendPort{
+												Name: constants.MysqlServiceName,
+											},
+										},
+										Resource: nil,
 									},
 								},
 							},

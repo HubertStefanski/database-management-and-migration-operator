@@ -48,6 +48,8 @@ const (
 	MysqlIngressName = "dbmmo-mysql-ingress"
 	//MysqlSecretEnvVal is the default password with which mysql will be set up
 	MysqlSecretEnvVal = "password"
+	//MysqlPathTypePrefix is the default pathtype for the ingress
+	MysqlPathTypePrefix = "Prefix"
 	//MysqlTargetPort is the default target port for mysql ingress
 	MysqlTargetPort = 3306
 	//MysqlDefaultPath is teh default path for the mysql ingres
