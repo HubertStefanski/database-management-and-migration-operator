@@ -88,6 +88,9 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			if result, err := r.onClusterReconcileMysqlService(ctx, mysql); err != nil {
 				return result, err
 			}
+			if result, err := r.onClusterReconcileIngress(ctx, mysql); err != nil {
+				return result, err
+			}
 
 			if result, err := r.onClusterReconcileMysqlDeployment(ctx, mysql); err != nil {
 				return result, err

@@ -44,11 +44,18 @@ const (
 	MysqlContainerName = "mysql-container"
 	//MysqlSecretEnvName is the default env var from which the mysql password will be retrieved
 	MysqlSecretEnvName = "MYSQL_ROOT_PASSWORD"
-
-	// TODO: refactor this to use a secret as opposed to envars
-
+	//MysqlIngressName is the default name for the mysql ingress
+	MysqlIngressName = "dbmmo-mysql-ingress"
 	//MysqlSecretEnvVal is the default password with which mysql will be set up
 	MysqlSecretEnvVal = "password"
+	//MysqlPathTypePrefix is the default pathtype for the ingress
+	MysqlPathTypePrefix = "Prefix"
+	//MysqlTargetPort is the default target port for mysql ingress
+	MysqlTargetPort = 3306
+	//MysqlDefaultPath is teh default path for the mysql ingres
+	MysqlDefaultPath = "/"
+	//MysqlHostName is the name of the host
+	MysqlHostName = "mysql-host-name"
 	//MysqlContainerPort is the default port from which the container will run the app
 	MysqlContainerPort = 3306
 	//MysqlContainerPortName is the default port name for the application port
