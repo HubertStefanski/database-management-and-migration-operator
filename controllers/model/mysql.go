@@ -3,23 +3,10 @@ package model
 import (
 	cachev1alpha1 "github.com/HubertStefanski/database-management-and-migration-operator/api/v1alpha1"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/constants"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-// GetMysqlDeployment returns a mysql Deployment object
-func GetMysqlDeployment(m *cachev1alpha1.DBMMOMySQL) *appsv1.Deployment {
-	dep := &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.MysqlDeploymentName,
-			Namespace: m.Namespace,
-		},
-	}
-	return dep
-}
 
 // GetMysqlPvc returns the mysql Persistent volume claim for mysql
 func GetMysqlPvc(m *cachev1alpha1.DBMMOMySQL) *corev1.PersistentVolumeClaim {

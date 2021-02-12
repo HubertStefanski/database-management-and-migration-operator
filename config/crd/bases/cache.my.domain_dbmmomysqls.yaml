@@ -37,8 +37,8 @@ spec:
             description: DBMMOMySQLSpec defines the desired state of DBMMOMySQL
             properties:
               deployment:
-                description: DBMMOMYSQLDeployment defines the desired state of the
-                  mysqlDeployment
+                description: Deployment defines the desired state of the deployment
+                  for this resource
                 properties:
                   deploymentType:
                     type: string
@@ -77,7 +77,7 @@ spec:
                     type: array
                 type: object
               size:
-                description: 'Size indicates the number of pods to be deployed'
+                description: Size indicates the number of pods to be deployed
                 format: int32
                 type: integer
             type: object
