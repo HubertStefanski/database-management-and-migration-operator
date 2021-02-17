@@ -21,6 +21,18 @@ const (
 
 	// MYSQL Constants ---------------------------------------------
 
+	//MysqlAzureClientIDEnvName is the constant envar name for AZURE_CLIENT_ID
+	MysqlAzureClientIDEnvName = "AZURE_CLIENT_ID"
+	//MysqlAzureClientSecretEnvName is the constant envar name for AZURE_CLIENT_SECRET
+	MysqlAzureClientSecretEnvName = "AZURE_CLIENT_SECRET"
+	//MysqlAzureTenantIDEnvName is the constant envar name for AZURE_TENANT_ID
+	MysqlAzureTenantIDEnvName = "AZURE_TENANT_ID"
+	//MysqlAzureSubscriptionIDEnvName is the constant envar name for AZURE_SUBSCRIPTION_ID
+	MysqlAzureSubscriptionIDEnvName = "AZURE_SUBSCRIPTION_ID"
+	//MysqlAzureBaseGroupNameEnvName is the constant envar name for AZURE_BASE_GROUP_NAME
+	MysqlAzureBaseGroupNameEnvName = "AZURE_BASE_GROUP_NAME"
+	//MysqlAzureLocationDefaultEnvName is the constant envar name for AZURE_LOCATION_DEFAULT
+	MysqlAzureLocationDefaultEnvName = "AZURE_LOCATION_DEFAULT"
 	// MysqlDeploymentTypeOnCluster Is the deployment type used to indicate that the database should be deployed on the same cluster as the operator
 	MysqlDeploymentTypeOnCluster = "OnCluster"
 	//MysqlDeploymentTypeAzure Is the deployment type used to indicate that the database should be deployed on azure

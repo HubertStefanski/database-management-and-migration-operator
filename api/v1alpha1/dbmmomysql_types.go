@@ -34,10 +34,21 @@ type DBMMOMySQLSpec struct {
 	Deployment *DBMMOMYSQLDeployment `json:"deployment,omitempty"`
 }
 
+// AzureConfig defines all required fields for Azure
+type AzureConfig struct {
+	AzureClientID        *string `json:"azureClientID,omitempty"`
+	AzureClientSecret    *string `json:"azureClientSecret,omitempty"`
+	AzureTenantID        *string `json:"azureTenantID,omitempty"`
+	AzureSubscriptionID  *string `json:"azureSubscriptionID,omitempty"`
+	AzureBaseGroupName   *string `json:"azureBaseGroupName,omitempty"`
+	AzureLocationDefault *string `json:"azureLocationDefault,omitempty"`
+}
+
 // DBMMOMYSQLDeployment defines the desired state of the mysqlDeployment
 type DBMMOMYSQLDeployment struct {
 	DeploymentType *string            `json:"deploymentType,omitempty"`
 	EnvFrom        []v1.EnvFromSource `json:"envFrom,omitempty"`
+	AzureConfig    *AzureConfig       `json:"azureConfig,omitempty"`
 }
 
 // DBMMOMySQLStatus defines the observed state of DBMMOMySQL

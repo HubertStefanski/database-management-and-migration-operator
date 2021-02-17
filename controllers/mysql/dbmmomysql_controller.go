@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/constants"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/model"
+	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/util"
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
@@ -106,8 +107,13 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				}
 			}
 		case constants.MysqlDeploymentTypeAzure:
-			r.Log.Info("Specified deployment type is not currently supported, please enter a supported type",
-				"DeploymentType", mysql.Spec.Deployment.DeploymentType)
+			if util.ValidateAzureConfig(mysql.Spec.Deployment) {
+
+			} else {
+				r.Log.Error(fmt.Errorf("%v", "Spec.Deployment Azure field misconfiguration"), "ensure data is valid",
+					"Deployment", mysql.Spec.Deployment)
+				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, nil
+			}
 		default:
 			r.Log.Error(fmt.Errorf("%v", "Unrecognized deployment type"), "ensure correct spelling or supported type",
 				"DeploymentType", mysql.Spec.Deployment.DeploymentType)
