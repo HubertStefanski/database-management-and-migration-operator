@@ -5,6 +5,9 @@ import "time"
 const (
 	// Operator/Project Constants ---------------------------------------------
 
+	//CloudName is the name for Azure cloud
+	CloudName string = "AzurePublicCloud"
+
 	//ReconcilerRequeueDelayOnFail is the time delay for controllers between failed reconcile loops
 	ReconcilerRequeueDelayOnFail = 5 * time.Second
 
@@ -37,7 +40,6 @@ const (
 	MysqlDeploymentTypeOnCluster = "OnCluster"
 	//MysqlDeploymentTypeAzure Is the deployment type used to indicate that the database should be deployed on azure
 	MysqlDeploymentTypeAzure = "Azure"
-
 	//MysqlName is the default name for mysql
 	MysqlName = "mysql"
 	//MysqlServiceName is the default name of the mysql service
@@ -60,6 +62,8 @@ const (
 	MysqlIngressName = "dbmmo-mysql-ingress"
 	//MysqlSecretEnvVal is the default password with which mysql will be set up
 	MysqlSecretEnvVal = "password"
+	//MysqlAdminUser is the default admin password
+	MysqlAdminUser = "admin"
 	//MysqlPathTypePrefix is the default pathtype for the ingress
 	MysqlPathTypePrefix = "Prefix"
 	//MysqlTargetPort is the default target port for mysql ingress

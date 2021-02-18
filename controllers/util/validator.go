@@ -5,22 +5,22 @@ import "github.com/HubertStefanski/database-management-and-migration-operator/ap
 // ValidateAzureConfig verifies whether the required fields have been configured correctly
 func ValidateAzureConfig(dep *v1alpha1.DBMMOMYSQLDeployment) bool {
 	if dep.AzureConfig != nil {
-		if dep.AzureConfig.AzureClientID == nil || *dep.AzureConfig.AzureClientID != "" {
+		if dep.AzureConfig.ClientID == nil || *dep.AzureConfig.ClientID != "" {
 			return false
 		}
-		if dep.AzureConfig.AzureClientSecret == nil || *dep.AzureConfig.AzureClientSecret != "" {
+		if dep.AzureConfig.ClientSecret == nil || *dep.AzureConfig.ClientSecret != "" {
 			return false
 		}
-		if dep.AzureConfig.AzureTenantID == nil || *dep.AzureConfig.AzureTenantID != "" {
+		if dep.AzureConfig.TenantID == nil || *dep.AzureConfig.TenantID != "" {
 			return false
 		}
-		if dep.AzureConfig.AzureSubscriptionID == nil || *dep.AzureConfig.AzureBaseGroupName != "" {
+		if dep.AzureConfig.SubscriptionID == nil || *dep.AzureConfig.BaseGroupName != "" {
 			return false
 		}
-		if dep.AzureConfig.AzureBaseGroupName == nil || *dep.AzureConfig.AzureBaseGroupName != "" {
+		if dep.AzureConfig.BaseGroupName == nil || *dep.AzureConfig.BaseGroupName != "" {
 			return false
 		}
-		if dep.AzureConfig.AzureLocationDefault == nil || *dep.AzureConfig.AzureLocationDefault != "" {
+		if dep.AzureConfig.LocationDefault == nil || *dep.AzureConfig.LocationDefault != "" {
 			return false
 		}
 		return true

@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/Azure/go-autorest/autorest/azure"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -34,21 +35,43 @@ type DBMMOMySQLSpec struct {
 	Deployment *DBMMOMYSQLDeployment `json:"deployment,omitempty"`
 }
 
+// OAuthGrantType defines the desired type of OAuthGrant
+type OAuthGrantType int
+
 // AzureConfig defines all required fields for Azure
 type AzureConfig struct {
-	AzureClientID        *string `json:"azureClientID,omitempty"`
-	AzureClientSecret    *string `json:"azureClientSecret,omitempty"`
-	AzureTenantID        *string `json:"azureTenantID,omitempty"`
-	AzureSubscriptionID  *string `json:"azureSubscriptionID,omitempty"`
-	AzureBaseGroupName   *string `json:"azureBaseGroupName,omitempty"`
-	AzureLocationDefault *string `json:"azureLocationDefault,omitempty"`
+	ClientID               *string            `json:"azureClientID,omitempty"`
+	ClientSecret           *string            `json:"azureClientSecret,omitempty"`
+	TenantID               *string            `json:"azureTenantID,omitempty"`
+	SubscriptionID         *string            `json:"azureSubscriptionID,omitempty"`
+	BaseGroupName          *string            `json:"azureBaseGroupName,omitempty"`
+	LocationDefault        *string            `json:"azureLocationDefault,omitempty"`
+	ConfigurationName      *string            `json:"azureConfigurationName,omitempty"`
+	OAuthGrantType         *OAuthGrantType    `json:"oauthGrantType,omitempty"`
+	AuthorizationServerURL *string            `json:"authorizationServerURL,omitempty"`
+	CloudName              *string            `json:"cloudName,omitempty"` //"AzurePublicCloud"
+	UseDeviceFlow          *bool              `json:"useDeviceFlow,omitempty"`
+	KeepResources          *bool              `json:"keepResources,omitempty"`
+	UserAgent              *string            `json:"userAgent,omitempty"`
+	Environment            *azure.Environment `json:"environment,omitempty"`
+	AzureFwRule            *AzureFwRule       `json:"azureFwRule,omitempty"`
+}
+
+//AzureFwRule defines desired state of the Azure firewall rule
+type AzureFwRule struct {
+	FirewallRuleName *string `json:"firewallRuleName,omitempty"`
+	StartIPAddr      *string `json:"startIPAddr,omitempty"`
+	EndIPAddr        *string `json:"endIPAddr,omitempty"`
 }
 
 // DBMMOMYSQLDeployment defines the desired state of the mysqlDeployment
 type DBMMOMYSQLDeployment struct {
-	DeploymentType *string            `json:"deploymentType,omitempty"`
-	EnvFrom        []v1.EnvFromSource `json:"envFrom,omitempty"`
-	AzureConfig    *AzureConfig       `json:"azureConfig,omitempty"`
+	ServerName        *string            `json:"serverName,omitempty"`
+	ConfigurationName *string            `json:"configurationName,omitempty"`
+	StorageCapacity   *int32             `json:"storageCapacity,omitempty"`
+	DeploymentType    *string            `json:"deploymentType,omitempty"`
+	EnvFrom           []v1.EnvFromSource `json:"envFrom,omitempty"`
+	AzureConfig       *AzureConfig       `json:"azureConfig,omitempty"`
 }
 
 // DBMMOMySQLStatus defines the observed state of DBMMOMySQL
