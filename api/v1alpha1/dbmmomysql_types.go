@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	mysql "github.com/Azure/azure-sdk-for-go/services/preview/mysql/mgmt/2020-07-01-preview/mysqlflexibleservers"
 	"github.com/Azure/go-autorest/autorest/azure"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -74,11 +75,31 @@ type DBMMOMYSQLDeployment struct {
 	AzureConfig       *AzureConfig       `json:"azureConfig,omitempty"`
 }
 
+//AzureState indicates the state of the Azure server in one line
+type AzureState string
+
+const (
+	//AzureCreated indicates that the server has been created
+	AzureCreated AzureState = "AzureCreated"
+	//AzureNotCreated indicates that the server has not been created
+	AzureNotCreated AzureState = "NotCreated"
+	//AzureError indicates that there was an issue while trying to invoke a connection to Azure
+	AzureError AzureState = "Error"
+)
+
+//AzureStatus Indicates the currents status of the Azure deployment, including Creation, State and the Created Server
+type AzureStatus struct {
+	Created bool         `json:"created"`
+	State   AzureState   `json:"azureState"`
+	Server  mysql.Server `json:"mysqlServer"`
+}
+
 // DBMMOMySQLStatus defines the observed state of DBMMOMySQL
 type DBMMOMySQLStatus struct {
-	Nodes                  []string `json:"nodes,omitempty"`
-	Services               []string `json:"services,omitempty"`
-	PersistentVolumeClaims []string `json:"persistentVolumeClaims,omitempty"`
+	Nodes                  []string    `json:"nodes,omitempty"`
+	Services               []string    `json:"services,omitempty"`
+	PersistentVolumeClaims []string    `json:"persistentVolumeClaims"`
+	AzureStatus            AzureStatus `json:"azureStatus"`
 }
 
 // +kubebuilder:object:root=true
