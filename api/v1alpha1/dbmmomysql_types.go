@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	mysql "github.com/Azure/azure-sdk-for-go/services/preview/mysql/mgmt/2020-07-01-preview/mysqlflexibleservers"
 	"github.com/Azure/go-autorest/autorest/azure"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -87,11 +86,24 @@ const (
 	AzureError AzureState = "Error"
 )
 
+type ServerInfo struct {
+	// Tags - Resource tags.
+	Tags map[string]*string `json:"tags"`
+	// Location - The geo-location where the resource lives
+	Location *string `json:"location,omitempty"`
+	// ID - READ-ONLY; Fully qualified resource ID for the resource. Ex - /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
+	ID *string `json:"id,omitempty"`
+	// Name - READ-ONLY; The name of the resource
+	Name *string `json:"name,omitempty"`
+	// Type - READ-ONLY; The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+	Type *string `json:"type,omitempty"`
+}
+
 //AzureStatus Indicates the currents status of the Azure deployment, including Creation, State and the Created Server
 type AzureStatus struct {
-	Created bool         `json:"created"`
-	State   AzureState   `json:"azureState"`
-	Server  mysql.Server `json:"mysqlServer"`
+	Created    bool       `json:"created"`
+	State      AzureState `json:"azureState"`
+	ServerInfo ServerInfo `json:"mysqlServer"`
 }
 
 // DBMMOMySQLStatus defines the observed state of DBMMOMySQL
