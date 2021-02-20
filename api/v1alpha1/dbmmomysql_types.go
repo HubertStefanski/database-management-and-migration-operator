@@ -74,11 +74,44 @@ type DBMMOMYSQLDeployment struct {
 	AzureConfig       *AzureConfig       `json:"azureConfig,omitempty"`
 }
 
+//AzureState indicates the state of the Azure server in one line
+type AzureState string
+
+const (
+	//AzureCreated indicates that the server has been created
+	AzureCreated AzureState = "AzureCreated"
+	//AzureNotCreated indicates that the server has not been created
+	AzureNotCreated AzureState = "NotCreated"
+	//AzureError indicates that there was an issue while trying to invoke a connection to Azure
+	AzureError AzureState = "Error"
+)
+
+type ServerInfo struct {
+	// Tags - Resource tags.
+	Tags map[string]*string `json:"tags"`
+	// Location - The geo-location where the resource lives
+	Location *string `json:"location,omitempty"`
+	// ID - READ-ONLY; Fully qualified resource ID for the resource. Ex - /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
+	ID *string `json:"id,omitempty"`
+	// Name - READ-ONLY; The name of the resource
+	Name *string `json:"name,omitempty"`
+	// Type - READ-ONLY; The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+	Type *string `json:"type,omitempty"`
+}
+
+//AzureStatus Indicates the currents status of the Azure deployment, including Creation, State and the Created Server
+type AzureStatus struct {
+	Created    bool       `json:"created"`
+	State      AzureState `json:"azureState"`
+	ServerInfo ServerInfo `json:"mysqlServer"`
+}
+
 // DBMMOMySQLStatus defines the observed state of DBMMOMySQL
 type DBMMOMySQLStatus struct {
-	Nodes                  []string `json:"nodes,omitempty"`
-	Services               []string `json:"services,omitempty"`
-	PersistentVolumeClaims []string `json:"persistentVolumeClaims,omitempty"`
+	Nodes                  []string    `json:"nodes,omitempty"`
+	Services               []string    `json:"services,omitempty"`
+	PersistentVolumeClaims []string    `json:"persistentVolumeClaims"`
+	AzureStatus            AzureStatus `json:"azureStatus"`
 }
 
 // +kubebuilder:object:root=true

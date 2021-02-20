@@ -40,6 +40,156 @@ spec:
                 description: Deployment defines the desired state of the deployment
                   for this resource
                 properties:
+                  azureConfig:
+                    description: AzureConfig defines all required fields for Azure
+                    properties:
+                      authorizationServerURL:
+                        type: string
+                      azureBaseGroupName:
+                        type: string
+                      azureClientID:
+                        type: string
+                      azureClientSecret:
+                        type: string
+                      azureConfigurationName:
+                        type: string
+                      azureFwRule:
+                        description: AzureFwRule defines desired state of the Azure
+                          firewall rule
+                        properties:
+                          endIPAddr:
+                            type: string
+                          firewallRuleName:
+                            type: string
+                          startIPAddr:
+                            type: string
+                        type: object
+                      azureLocationDefault:
+                        type: string
+                      azureSubscriptionID:
+                        type: string
+                      azureTenantID:
+                        type: string
+                      cloudName:
+                        type: string
+                      environment:
+                        description: Environment represents a set of endpoints for
+                          each of Azure's Clouds.
+                        properties:
+                          activeDirectoryEndpoint:
+                            type: string
+                          apiManagementHostNameSuffix:
+                            type: string
+                          batchManagementEndpoint:
+                            type: string
+                          containerRegistryDNSSuffix:
+                            type: string
+                          cosmosDBDNSSuffix:
+                            type: string
+                          galleryEndpoint:
+                            type: string
+                          graphEndpoint:
+                            type: string
+                          keyVaultDNSSuffix:
+                            type: string
+                          keyVaultEndpoint:
+                            type: string
+                          managementPortalURL:
+                            type: string
+                          name:
+                            type: string
+                          publishSettingsURL:
+                            type: string
+                          resourceIdentifiers:
+                            description: ResourceIdentifier contains a set of Azure
+                              resource IDs.
+                            properties:
+                              batch:
+                                type: string
+                              datalake:
+                                type: string
+                              graph:
+                                type: string
+                              keyVault:
+                                type: string
+                              operationalInsights:
+                                type: string
+                              serviceBus:
+                                type: string
+                              storage:
+                                type: string
+                              synapse:
+                                type: string
+                            required:
+                            - batch
+                            - datalake
+                            - graph
+                            - keyVault
+                            - operationalInsights
+                            - serviceBus
+                            - storage
+                            - synapse
+                            type: object
+                          resourceManagerEndpoint:
+                            type: string
+                          resourceManagerVMDNSSuffix:
+                            type: string
+                          serviceBusEndpoint:
+                            type: string
+                          serviceBusEndpointSuffix:
+                            type: string
+                          serviceManagementEndpoint:
+                            type: string
+                          serviceManagementVMDNSSuffix:
+                            type: string
+                          sqlDatabaseDNSSuffix:
+                            type: string
+                          storageEndpointSuffix:
+                            type: string
+                          synapseEndpointSuffix:
+                            type: string
+                          tokenAudience:
+                            type: string
+                          trafficManagerDNSSuffix:
+                            type: string
+                        required:
+                        - activeDirectoryEndpoint
+                        - apiManagementHostNameSuffix
+                        - batchManagementEndpoint
+                        - containerRegistryDNSSuffix
+                        - cosmosDBDNSSuffix
+                        - galleryEndpoint
+                        - graphEndpoint
+                        - keyVaultDNSSuffix
+                        - keyVaultEndpoint
+                        - managementPortalURL
+                        - name
+                        - publishSettingsURL
+                        - resourceIdentifiers
+                        - resourceManagerEndpoint
+                        - resourceManagerVMDNSSuffix
+                        - serviceBusEndpoint
+                        - serviceBusEndpointSuffix
+                        - serviceManagementEndpoint
+                        - serviceManagementVMDNSSuffix
+                        - sqlDatabaseDNSSuffix
+                        - storageEndpointSuffix
+                        - synapseEndpointSuffix
+                        - tokenAudience
+                        - trafficManagerDNSSuffix
+                        type: object
+                      keepResources:
+                        type: boolean
+                      oauthGrantType:
+                        description: OAuthGrantType defines the desired type of OAuthGrant
+                        type: integer
+                      useDeviceFlow:
+                        type: boolean
+                      userAgent:
+                        type: string
+                    type: object
+                  configurationName:
+                    type: string
                   deploymentType:
                     type: string
                   envFrom:
@@ -75,6 +225,11 @@ spec:
                           type: object
                       type: object
                     type: array
+                  serverName:
+                    type: string
+                  storageCapacity:
+                    format: int32
+                    type: integer
                 type: object
               size:
                 description: Size indicates the number of pods to be deployed
@@ -84,6 +239,46 @@ spec:
           status:
             description: DBMMOMySQLStatus defines the observed state of DBMMOMySQL
             properties:
+              azureStatus:
+                description: AzureStatus Indicates the currents status of the Azure
+                  deployment, including Creation, State and the Created Server
+                properties:
+                  azureState:
+                    description: AzureState indicates the state of the Azure server
+                      in one line
+                    type: string
+                  created:
+                    type: boolean
+                  mysqlServer:
+                    properties:
+                      id:
+                        description: ID - READ-ONLY; Fully qualified resource ID for
+                          the resource. Ex - /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
+                        type: string
+                      location:
+                        description: Location - The geo-location where the resource
+                          lives
+                        type: string
+                      name:
+                        description: Name - READ-ONLY; The name of the resource
+                        type: string
+                      tags:
+                        additionalProperties:
+                          type: string
+                        description: Tags - Resource tags.
+                        type: object
+                      type:
+                        description: Type - READ-ONLY; The type of the resource. E.g.
+                          "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
+                        type: string
+                    required:
+                    - tags
+                    type: object
+                required:
+                - azureState
+                - created
+                - mysqlServer
+                type: object
               nodes:
                 items:
                   type: string
@@ -96,6 +291,9 @@ spec:
                 items:
                   type: string
                 type: array
+            required:
+            - azureStatus
+            - persistentVolumeClaims
             type: object
         type: object
     served: true

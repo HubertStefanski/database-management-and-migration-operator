@@ -108,6 +108,26 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 		case constants.MysqlDeploymentTypeAzure:
 			if util.ValidateAzureConfig(mysql.Spec.Deployment) {
+				// If Azure state doesn't indicate an error and hasn't been created, then create it
+				if !mysql.Status.AzureStatus.Created {
+					server, err := util.CreateServer(ctx, mysql)
+					if err != nil {
+						mysql.Status.AzureStatus.State = cachev1alpha1.AzureError
+						return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
+					}
+					//Update the status for future reference to the server
+					mysql.Status.AzureStatus.ServerInfo = cachev1alpha1.ServerInfo{
+						Tags:     server.Tags,
+						Location: server.Location,
+						ID:       server.ID,
+						Name:     server.Name,
+						Type:     server.Type,
+					}
+					mysql.Status.AzureStatus.State = cachev1alpha1.AzureCreated
+					mysql.Status.AzureStatus.Created = true
+					return ctrl.Result{}, nil
+
+				}
 
 			} else {
 				r.Log.Error(fmt.Errorf("%v", "Spec.Deployment Azure field misconfiguration"), "ensure data is valid",
