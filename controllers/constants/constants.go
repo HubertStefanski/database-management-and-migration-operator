@@ -63,7 +63,7 @@ const (
 	//MysqlSecretEnvVal is the default password with which mysql will be set up
 	MysqlSecretEnvVal = "password"
 	//MysqlAdminUser is the default admin password
-	MysqlAdminUser = "admin"
+	MysqlAdminUser = "dbmmo_admin"
 	//MysqlPathTypePrefix is the default pathtype for the ingress
 	MysqlPathTypePrefix = "Prefix"
 	//MysqlTargetPort is the default target port for mysql ingress

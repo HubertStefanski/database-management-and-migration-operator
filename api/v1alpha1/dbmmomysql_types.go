@@ -40,13 +40,13 @@ type OAuthGrantType int
 
 // AzureConfig defines all required fields for Azure
 type AzureConfig struct {
-	ClientID               *string            `json:"azureClientID,omitempty"`
-	ClientSecret           *string            `json:"azureClientSecret,omitempty"`
-	TenantID               *string            `json:"azureTenantID,omitempty"`
-	SubscriptionID         *string            `json:"azureSubscriptionID,omitempty"`
-	BaseGroupName          *string            `json:"azureBaseGroupName,omitempty"`
-	LocationDefault        *string            `json:"azureLocationDefault,omitempty"`
-	ConfigurationName      *string            `json:"azureConfigurationName,omitempty"`
+	ClientID               *string            `json:"clientID,omitempty"`
+	ClientSecret           *string            `json:"clientSecret,omitempty"`
+	TenantID               *string            `json:"tenantID,omitempty"`
+	SubscriptionID         *string            `json:"subscriptionID,omitempty"`
+	BaseGroupName          *string            `json:"baseGroupName,omitempty"`
+	LocationDefault        *string            `json:"locationDefault,omitempty"`
+	ConfigurationName      *string            `json:"configurationName,omitempty"`
 	OAuthGrantType         *OAuthGrantType    `json:"oauthGrantType,omitempty"`
 	AuthorizationServerURL *string            `json:"authorizationServerURL,omitempty"`
 	CloudName              *string            `json:"cloudName,omitempty"` //"AzurePublicCloud"
@@ -54,7 +54,7 @@ type AzureConfig struct {
 	KeepResources          *bool              `json:"keepResources,omitempty"`
 	UserAgent              *string            `json:"userAgent,omitempty"`
 	Environment            *azure.Environment `json:"environment,omitempty"`
-	AzureFwRule            *AzureFwRule       `json:"azureFwRule,omitempty"`
+	AzureFwRule            *AzureFwRule       `json:"fwRule,omitempty"`
 }
 
 //AzureFwRule defines desired state of the Azure firewall rule

@@ -45,32 +45,15 @@ spec:
                     properties:
                       authorizationServerURL:
                         type: string
-                      azureBaseGroupName:
+                      baseGroupName:
                         type: string
-                      azureClientID:
+                      clientID:
                         type: string
-                      azureClientSecret:
-                        type: string
-                      azureConfigurationName:
-                        type: string
-                      azureFwRule:
-                        description: AzureFwRule defines desired state of the Azure
-                          firewall rule
-                        properties:
-                          endIPAddr:
-                            type: string
-                          firewallRuleName:
-                            type: string
-                          startIPAddr:
-                            type: string
-                        type: object
-                      azureLocationDefault:
-                        type: string
-                      azureSubscriptionID:
-                        type: string
-                      azureTenantID:
+                      clientSecret:
                         type: string
                       cloudName:
+                        type: string
+                      configurationName:
                         type: string
                       environment:
                         description: Environment represents a set of endpoints for
@@ -178,11 +161,28 @@ spec:
                         - tokenAudience
                         - trafficManagerDNSSuffix
                         type: object
+                      fwRule:
+                        description: AzureFwRule defines desired state of the Azure
+                          firewall rule
+                        properties:
+                          endIPAddr:
+                            type: string
+                          firewallRuleName:
+                            type: string
+                          startIPAddr:
+                            type: string
+                        type: object
                       keepResources:
                         type: boolean
+                      locationDefault:
+                        type: string
                       oauthGrantType:
                         description: OAuthGrantType defines the desired type of OAuthGrant
                         type: integer
+                      subscriptionID:
+                        type: string
+                      tenantID:
+                        type: string
                       useDeviceFlow:
                         type: boolean
                       userAgent:

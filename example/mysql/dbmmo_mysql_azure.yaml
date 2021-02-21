@@ -1,0 +1,23 @@
+---
+apiVersion: cache.my.domain/v1alpha1
+kind: DBMMOMySQL
+metadata:
+  name: dbmmo-mysql
+  labels:
+    type: example
+spec:
+  size: 1
+  deployment:
+    serverName: "<req>"
+    deploymentType: "Azure"
+    azureConfig:
+      subscriptionID: "<req>"
+      tenantID: "<req>"
+      clientSecret: "<req>"
+      clientID: "<req>"
+      oauthGrantType: "<req>"
+      locationDefault: "<req>"
+      baseGroupName: "<req>"
+    envFrom:
+      - secretRef:
+          name: dbmmo-mysql-secret

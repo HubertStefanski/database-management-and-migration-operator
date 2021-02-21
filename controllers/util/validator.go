@@ -23,6 +23,9 @@ func ValidateAzureConfig(dep *v1alpha1.DBMMOMYSQLDeployment) bool {
 		if dep.AzureConfig.LocationDefault == nil || *dep.AzureConfig.LocationDefault != "" {
 			return false
 		}
+		if dep.AzureConfig.OAuthGrantType == nil {
+			return false
+		}
 
 		return true
 	}
