@@ -1,0 +1,32 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dbmm-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: dbmmo-mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        name: dbmmo-mysql
+    spec:
+      serviceAccountName: dbmm-operator
+      containers:
+        - name: dbmm-operator
+          image: hubertstefanski/dbmmo:v0.3.0
+          ports:
+            - containerPort: 60000
+              name: metrics
+          imagePullPolicy: Always
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "dbmm-operator"

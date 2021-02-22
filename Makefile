@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?=v0.2.0
+VERSION ?=v0.3.0
 # Cluster namespace to be used for setting up the operator
 NAMESPACE ?="dbmmo-ns"
 
