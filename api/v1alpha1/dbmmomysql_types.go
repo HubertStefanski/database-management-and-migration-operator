@@ -88,7 +88,7 @@ const (
 
 type ServerInfo struct {
 	// Tags - Resource tags.
-	Tags map[string]*string `json:"tags"`
+	Tags map[string]*string `json:"tags,omitempty"`
 	// Location - The geo-location where the resource lives
 	Location *string `json:"location,omitempty"`
 	// ID - READ-ONLY; Fully qualified resource ID for the resource. Ex - /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
@@ -101,17 +101,17 @@ type ServerInfo struct {
 
 //AzureStatus Indicates the currents status of the Azure deployment, including Creation, State and the Created Server
 type AzureStatus struct {
-	Created    bool       `json:"created"`
-	State      AzureState `json:"azureState"`
-	ServerInfo ServerInfo `json:"mysqlServer"`
+	Created    bool       `json:"created,omitempty"`
+	State      AzureState `json:"azureState,omitempty"`
+	ServerInfo ServerInfo `json:"mysqlServer,omitempty"`
 }
 
 // DBMMOMySQLStatus defines the observed state of DBMMOMySQL
 type DBMMOMySQLStatus struct {
 	Nodes                  []string    `json:"nodes,omitempty"`
 	Services               []string    `json:"services,omitempty"`
-	PersistentVolumeClaims []string    `json:"persistentVolumeClaims"`
-	AzureStatus            AzureStatus `json:"azureStatus"`
+	PersistentVolumeClaims []string    `json:"persistentVolumeClaims,omitempty"`
+	AzureStatus            AzureStatus `json:"azureStatus,omitempty"`
 }
 
 // +kubebuilder:object:root=true

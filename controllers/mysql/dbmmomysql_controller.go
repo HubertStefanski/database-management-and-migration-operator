@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/constants"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/model"
-	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/util"
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
@@ -107,34 +106,10 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				}
 			}
 		case constants.MysqlDeploymentTypeAzure:
-			if util.ValidateAzureConfig(mysql.Spec.Deployment) {
-				// If Azure state doesn't indicate an error and hasn't been created, then create it
-				if !mysql.Status.AzureStatus.Created {
-					r.Log.Info("Mysql Azure instance creating, please wait", "mysql.ServerName", *mysql.Spec.Deployment.ServerName, "Config:", *mysql.Spec.Deployment.AzureConfig)
-					server, err := util.CreateServer(ctx, mysql)
-					if err != nil {
-						mysql.Status.AzureStatus.State = cachev1alpha1.AzureError
-						return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
-					}
-					//Update the status for future reference to the server
-					mysql.Status.AzureStatus.ServerInfo = cachev1alpha1.ServerInfo{
-						Tags:     server.Tags,
-						Location: server.Location,
-						ID:       server.ID,
-						Name:     server.Name,
-						Type:     server.Type,
-					}
-					mysql.Status.AzureStatus.State = cachev1alpha1.AzureCreated
-					mysql.Status.AzureStatus.Created = true
-					return ctrl.Result{}, nil
-
-				}
-
-			} else {
-				r.Log.Error(fmt.Errorf("%v", "Spec.Deployment Azure field misconfiguration"), "ensure data is valid",
-					"Deployment", mysql.Spec.Deployment)
-				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, nil
+			if result, err := r.azureReconcileMysql(ctx, mysql); err != nil {
+				return result, err
 			}
+
 		default:
 			r.Log.Error(fmt.Errorf("%v", "Unrecognized deployment type"), "ensure correct spelling or supported type",
 				"DeploymentType", mysql.Spec.Deployment.DeploymentType)
