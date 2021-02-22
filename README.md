@@ -2,8 +2,8 @@
 
 A simple Kubernetes Operator based on the Operator-SDK to manage and migrate databases between cloud environments.
 
-
 ## Requirements
+
 - Running ***Kubernetes/Openshift*** cluster
 - Operator-SDK version ***v1.3.0***
 - Go version ***go1.15.2***
@@ -12,7 +12,7 @@ A simple Kubernetes Operator based on the Operator-SDK to manage and migrate dat
 
 The Operator Image can be found at :
 
- ***hubertstefanski/dbmmo:latest*** (hosted on hub.docker.com)
+***hubertstefanski/dbmmo:latest*** (hosted on hub.docker.com)
 
 ## (Warning)
 
@@ -24,8 +24,12 @@ This Operator is heavily ***Work In Progress*** as part of a final year project 
 ![Operator Overview](documentation/images/operator-overview.png)
 
 ## Current functionality
-- Hard coded (non-configurable) installation of MySQL Service, Deployment and PersistentVolumeClaim (Update & Delete TBA)
+
+- Hard coded (non-configurable) installation of MySQL Service, Deployment and PersistentVolumeClaim (Update & Delete
+  TBA)
 - Local database management and provisioning for MySQL(on-cluster) accessible through service
+- Cloud database creation and deletion for Azure (partial configuration)
+
 ## Planned functionality
 
 - Cloud database management and provisioning for Azure (to be expanded to GCP/AWS/etc in the future)
@@ -44,12 +48,12 @@ Prepare the cluster by generating all manifests/code and applying CRDs to the cl
  ```bash
  make install
  ```
- 
-Apply the dbmmo_mysql resource with 
+
+Apply the dbmmo_mysql resource with
+
 ```bash
 kubectl apply -f example/mysql/dbmm_mysql.yaml -n <NAMESPACE>
 ```
-
 
 Run the operator locally with
 
@@ -60,11 +64,15 @@ make run
 ```
 
 ### Deployment
+
 Prepare the cluster by running
+
 ```bash
 make cluster/prepare/local NAMESPACE=<NAMESPACE>
  ```
-This will create all necessary roles, service accounts, roles and bindings for the operator to be able to run as a deployment
+
+This will create all necessary roles, service accounts, roles and bindings for the operator to be able to run as a
+deployment
 
 Apply the operator deployment to the cluster with:
 
