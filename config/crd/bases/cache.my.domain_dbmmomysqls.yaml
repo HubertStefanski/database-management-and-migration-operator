@@ -250,6 +250,7 @@ spec:
                   created:
                     type: boolean
                   mysqlServer:
+                    description: ServerInfo wraps the returned information from mysql.Server
                     properties:
                       id:
                         description: ID - READ-ONLY; Fully qualified resource ID for
@@ -271,13 +272,7 @@ spec:
                         description: Type - READ-ONLY; The type of the resource. E.g.
                           "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
                         type: string
-                    required:
-                    - tags
                     type: object
-                required:
-                - azureState
-                - created
-                - mysqlServer
                 type: object
               nodes:
                 items:
@@ -291,9 +286,6 @@ spec:
                 items:
                   type: string
                 type: array
-            required:
-            - azureStatus
-            - persistentVolumeClaims
             type: object
         type: object
     served: true
