@@ -18,6 +18,9 @@ func (r *DBMMOMySQLReconciler) azureReconcileMysql(ctx context.Context, mysql *c
 			server, err := util.CreateServer(ctx, mysql)
 			if err != nil {
 				mysql.Status.AzureStatus.State = cachev1alpha1.AzureError
+				if result, err := r.azureReconcileStatus(ctx, mysql); err != nil {
+					return result, err
+				}
 				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 			}
 			//Update the status for future reference to the server
@@ -55,6 +58,18 @@ func (r *DBMMOMySQLReconciler) azureReconcileStatus(ctx context.Context, mysql *
 		return ctrl.Result{}, err
 	}
 
-	r.Log.Info("Mysql status reconciled", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
+	r.Log.Info("Reconciled Mysql status ", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
 	return ctrl.Result{Requeue: true}, nil
+}
+
+func (r *DBMMOMySQLReconciler) azureCleanup(ctx context.Context, mysql *cachev1alpha1.DBMMOMySQL) (ctrl.Result, error) {
+	mysql.Status.AzureStatus.State = cachev1alpha1.AzureDeleting
+	r.Log.Info("Deleting MySQL on Azure", "mysql.ServerName", mysql.Spec.Deployment.ServerName)
+	if resp, err := util.DeleteServer(ctx, *mysql.Status.AzureStatus.ServerInfo.Name, mysql); err != nil || resp.StatusCode != 200 {
+		r.Log.Error(err, "Failed to delete mysql Azure server", "mysql.ServerName", mysql.Spec.Deployment.ServerName)
+		return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
+	}
+	r.Log.Info("Deleted MySQL on Azure", "mysql.ServerName", mysql.Spec.Deployment.ServerName)
+	return ctrl.Result{}, nil
+
 }

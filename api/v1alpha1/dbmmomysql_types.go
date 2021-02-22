@@ -84,8 +84,11 @@ const (
 	AzureNotCreated AzureState = "NotCreated"
 	//AzureError indicates that there was an issue while trying to invoke a connection to Azure
 	AzureError AzureState = "Error"
+	//AzureDeleting indicates that the server is being deleted
+	AzureDeleting AzureState = "Deleting"
 )
 
+//ServerInfo wraps the returned information from mysql.Server
 type ServerInfo struct {
 	// Tags - Resource tags.
 	Tags map[string]*string `json:"tags,omitempty"`

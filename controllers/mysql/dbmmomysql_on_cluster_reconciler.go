@@ -75,7 +75,7 @@ func (r *DBMMOMySQLReconciler) onClusterReconcileMysqlStatus(ctx context.Context
 			return ctrl.Result{}, err
 		}
 	}
-	r.Log.Info("Mysql status reconciled", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
+	r.Log.Info("Reconciled Mysql status ", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
 	return ctrl.Result{Requeue: true}, nil
 }
 

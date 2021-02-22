@@ -250,6 +250,7 @@ spec:
                   created:
                     type: boolean
                   mysqlServer:
+                    description: ServerInfo wraps the returned information from mysql.Server
                     properties:
                       id:
                         description: ID - READ-ONLY; Fully qualified resource ID for
