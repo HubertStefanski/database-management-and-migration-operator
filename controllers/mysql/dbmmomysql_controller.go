@@ -110,6 +110,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			if util.ValidateAzureConfig(mysql.Spec.Deployment) {
 				// If Azure state doesn't indicate an error and hasn't been created, then create it
 				if !mysql.Status.AzureStatus.Created {
+					r.Log.Info("Mysql Azure instance creating, please wait", "mysql.ServerName", *mysql.Spec.Deployment.ServerName, "Config:", *mysql.Spec.Deployment.AzureConfig)
 					server, err := util.CreateServer(ctx, mysql)
 					if err != nil {
 						mysql.Status.AzureStatus.State = cachev1alpha1.AzureError
