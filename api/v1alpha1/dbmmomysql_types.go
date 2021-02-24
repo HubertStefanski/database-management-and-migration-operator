@@ -79,6 +79,7 @@ type DBMMOMYSQLDeployment struct {
 	EnvFrom           []v1.EnvFromSource `json:"envFrom,omitempty"`
 	ServerCredentials *MysqlCredentials  `json:"serverCredentials,omitempty"`
 	AzureConfig       *AzureConfig       `json:"azureConfig,omitempty"`
+	TableInitCMD      *string            `json:"tableInitCMD,omitempty"`
 }
 
 //AzureState indicates the state of the Azure server in one line
