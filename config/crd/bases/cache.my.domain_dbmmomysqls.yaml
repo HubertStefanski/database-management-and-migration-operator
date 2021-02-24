@@ -190,6 +190,8 @@ spec:
                     type: object
                   configurationName:
                     type: string
+                  createTable:
+                    type: boolean
                   deploymentType:
                     type: string
                   envFrom:
@@ -225,6 +227,10 @@ spec:
                           type: object
                       type: object
                     type: array
+                  initCMD:
+                    items:
+                      type: string
+                    type: array
                   ingress:
                     description: DBMMOIngress defines the ingress configuration
                     properties:
@@ -243,7 +249,8 @@ spec:
                   serverName:
                     type: string
                   storageCapacity:
-                    type: string
+                    format: int32
+                    type: integer
                 type: object
               size:
                 description: Size indicates the number of pods to be deployed
@@ -266,6 +273,23 @@ spec:
                   mysqlServer:
                     description: ServerInfo wraps the returned information from mysql.Server
                     properties:
+                      administratorLogin:
+                        description: AdministratorLogin - The administrator's login
+                          name of a server. Can only be specified when the server
+                          is being created (and is required for creation).
+                        type: string
+                      administratorLoginPassword:
+                        description: AdministratorLoginPassword - The password of
+                          the administrator login (required for server creation).
+                        type: string
+                      availabilityZone:
+                        description: AvailabilityZone - availability Zone information
+                          of the server.
+                        type: string
+                      fullyQualifiedDomainName:
+                        description: FullyQualifiedDomainName - READ-ONLY; The fully
+                          qualified domain name of a server.
+                        type: string
                       id:
                         description: ID - READ-ONLY; Fully qualified resource ID for
                           the resource. Ex - /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
@@ -276,6 +300,23 @@ spec:
                         type: string
                       name:
                         description: Name - READ-ONLY; The name of the resource
+                        type: string
+                      replicaCapacity:
+                        description: ReplicaCapacity - READ-ONLY; The maximum number
+                          of replicas that a primary server can have.
+                        format: int32
+                        type: integer
+                      replicationRole:
+                        description: ReplicationRole - The replication role.
+                        type: string
+                      sourceServerId:
+                        description: SourceServerID - The source MySQL server id.
+                        type: string
+                      state:
+                        description: 'State - READ-ONLY; The state of a server. Possible
+                          values include: ''ServerStateReady'', ''ServerStateDropping'',
+                          ''ServerStateDisabled'', ''ServerStateStarting'', ''ServerStateStopping'',
+                          ''ServerStateStopped'', ''ServerStateUpdating'''
                         type: string
                       tags:
                         additionalProperties:

@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	mysql "github.com/Azure/azure-sdk-for-go/services/preview/mysql/mgmt/2020-07-01-preview/mysqlflexibleservers"
 	"github.com/Azure/go-autorest/autorest/azure"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,7 +80,9 @@ type DBMMOMYSQLDeployment struct {
 	EnvFrom           []v1.EnvFromSource `json:"envFrom,omitempty"`
 	ServerCredentials *MysqlCredentials  `json:"serverCredentials,omitempty"`
 	AzureConfig       *AzureConfig       `json:"azureConfig,omitempty"`
-	TableInitCMD      *string            `json:"tableInitCMD,omitempty"`
+	InitCMD           *[]string          `json:"initCMD,omitempty"`
+	CreateTable       *bool              `json:"createTable,omitempty"`
+	TableStatement    *string            `json:"tableStatement,omitempty"`
 }
 
 //AzureState indicates the state of the Azure server in one line
@@ -108,6 +111,22 @@ type ServerInfo struct {
 	Name *string `json:"name,omitempty"`
 	// Type - READ-ONLY; The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
 	Type *string `json:"type,omitempty"`
+	// AdministratorLogin - The administrator's login name of a server. Can only be specified when the server is being created (and is required for creation).
+	AdministratorLogin *string `json:"administratorLogin,omitempty"`
+	// AdministratorLoginPassword - The password of the administrator login (required for server creation).
+	AdministratorLoginPassword *string `json:"administratorLoginPassword,omitempty"`
+	// State - READ-ONLY; The state of a server. Possible values include: 'ServerStateReady', 'ServerStateDropping', 'ServerStateDisabled', 'ServerStateStarting', 'ServerStateStopping', 'ServerStateStopped', 'ServerStateUpdating'
+	State mysql.ServerState `json:"state,omitempty"`
+	// FullyQualifiedDomainName - READ-ONLY; The fully qualified domain name of a server.
+	FullyQualifiedDomainName *string `json:"fullyQualifiedDomainName,omitempty"`
+	// ReplicationRole - The replication role.
+	ReplicationRole *string `json:"replicationRole,omitempty"`
+	// ReplicaCapacity - READ-ONLY; The maximum number of replicas that a primary server can have.
+	ReplicaCapacity *int32 `json:"replicaCapacity,omitempty"`
+	// SourceServerID - The source MySQL server id.
+	SourceServerID *string `json:"sourceServerId,omitempty"`
+	// AvailabilityZone - availability Zone information of the server.
+	AvailabilityZone *string `json:"availabilityZone,omitempty"`
 }
 
 //AzureStatus Indicates the currents status of the Azure deployment, including Creation, State and the Created Server
