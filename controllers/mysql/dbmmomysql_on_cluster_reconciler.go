@@ -116,6 +116,9 @@ func (r *DBMMOMySQLReconciler) onClusterReconcileMysqlDeployment(ctx context.Con
 					Containers: []corev1.Container{{
 						Name:  constants.MysqlContainerName,
 						Image: constants.MysqlContainerImage,
+						Command: []string{
+							model.GetMysqlInitCommand(mysql),
+						},
 						Ports: []corev1.ContainerPort{{
 							ContainerPort: constants.MysqlContainerPort,
 							Name:          constants.MysqlContainerPortName,
