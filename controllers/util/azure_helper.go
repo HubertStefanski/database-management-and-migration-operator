@@ -2,6 +2,7 @@ package util
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	mysql "github.com/Azure/azure-sdk-for-go/services/preview/mysql/mgmt/2020-07-01-preview/mysqlflexibleservers"
 	"github.com/Azure/go-autorest/autorest"
@@ -11,6 +12,7 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/HubertStefanski/database-management-and-migration-operator/api/v1alpha1"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/constants"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
@@ -32,6 +34,28 @@ func getServersClient(m *v1alpha1.DBMMOMySQL) mysql.ServersClient {
 	serversClient.Authorizer = a
 	//_ = serversClient.AddToUserAgent(*m.Spec.Deployment.AzureConfig.UserAgent)
 	return serversClient
+}
+
+func ServerExists(ctx context.Context, m *v1alpha1.DBMMOMySQL) (bool, error) {
+	server := getServersClient(m)
+	if res, err := server.Get(ctx, *m.Spec.Deployment.AzureConfig.BaseGroupName, *m.Spec.Deployment.ServerName); res.Response.StatusCode == 404 {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	return true, nil
+
+}
+
+func GetServer(ctx context.Context, m *v1alpha1.DBMMOMySQL) (mysql.Server, error) {
+	server := getServersClient(m)
+	if res, err := server.Get(ctx, *m.Spec.Deployment.AzureConfig.BaseGroupName, *m.Spec.Deployment.ServerName); res.Response.StatusCode == 404 {
+		return res, nil
+	} else if err != nil {
+		return res, err
+	}
+	return mysql.Server{}, nil
+
 }
 
 // CreateServer creates a new MySQL Server
@@ -254,4 +278,28 @@ func getEnvironment() *azure.Environment {
 	}
 	environment = &env
 	return environment
+}
+
+func ConnectAndExec(query, user, password, host, database string) error {
+	// Initialize connection string.
+	var connectionString = fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?allowNativePasswords=true", user, password, host, database)
+
+	// Initialize connection object.
+	db, err := sql.Open("mysql", connectionString)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	err = db.Ping()
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

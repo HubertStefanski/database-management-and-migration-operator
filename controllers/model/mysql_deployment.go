@@ -21,11 +21,11 @@ func GetMysqlDeployment(m *v1alpha1.DBMMOMySQL) *appsv1.Deployment {
 }
 
 //GetMysqlInitCommand Initialises the container with the command specified in the deployment spec
-func GetMysqlInitCommand(m *v1alpha1.DBMMOMySQL) string {
-	if m.Spec.Deployment.TableInitCMD != nil && *m.Spec.Deployment.TableInitCMD != "" {
-		return *m.Spec.Deployment.TableInitCMD
+func GetMysqlInitCommand(m *v1alpha1.DBMMOMySQL) []string {
+	if m.Spec.Deployment.InitCMD != nil {
+		return *m.Spec.Deployment.InitCMD
 	}
-	return ""
+	return []string{""}
 }
 
 // MysqlDeploymentGetEnvFrom returns the environment variables contained within a secret

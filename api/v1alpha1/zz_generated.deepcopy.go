@@ -197,8 +197,22 @@ func (in *DBMMOMYSQLDeployment) DeepCopyInto(out *DBMMOMYSQLDeployment) {
 		*out = new(AzureConfig)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.TableInitCMD != nil {
-		in, out := &in.TableInitCMD, &out.TableInitCMD
+	if in.InitCMD != nil {
+		in, out := &in.InitCMD, &out.InitCMD
+		*out = new([]string)
+		if **in != nil {
+			in, out := *in, *out
+			*out = make([]string, len(*in))
+			copy(*out, *in)
+		}
+	}
+	if in.CreateTable != nil {
+		in, out := &in.CreateTable, &out.CreateTable
+		*out = new(bool)
+		**out = **in
+	}
+	if in.TableStatement != nil {
+		in, out := &in.TableStatement, &out.TableStatement
 		*out = new(string)
 		**out = **in
 	}
@@ -359,6 +373,41 @@ func (in *ServerInfo) DeepCopyInto(out *ServerInfo) {
 	}
 	if in.Type != nil {
 		in, out := &in.Type, &out.Type
+		*out = new(string)
+		**out = **in
+	}
+	if in.AdministratorLogin != nil {
+		in, out := &in.AdministratorLogin, &out.AdministratorLogin
+		*out = new(string)
+		**out = **in
+	}
+	if in.AdministratorLoginPassword != nil {
+		in, out := &in.AdministratorLoginPassword, &out.AdministratorLoginPassword
+		*out = new(string)
+		**out = **in
+	}
+	if in.FullyQualifiedDomainName != nil {
+		in, out := &in.FullyQualifiedDomainName, &out.FullyQualifiedDomainName
+		*out = new(string)
+		**out = **in
+	}
+	if in.ReplicationRole != nil {
+		in, out := &in.ReplicationRole, &out.ReplicationRole
+		*out = new(string)
+		**out = **in
+	}
+	if in.ReplicaCapacity != nil {
+		in, out := &in.ReplicaCapacity, &out.ReplicaCapacity
+		*out = new(int32)
+		**out = **in
+	}
+	if in.SourceServerID != nil {
+		in, out := &in.SourceServerID, &out.SourceServerID
+		*out = new(string)
+		**out = **in
+	}
+	if in.AvailabilityZone != nil {
+		in, out := &in.AvailabilityZone, &out.AvailabilityZone
 		*out = new(string)
 		**out = **in
 	}

@@ -13,7 +13,15 @@ func (r *DBMMOMySQLReconciler) azureReconcileMysql(ctx context.Context, mysql *c
 	if util.ValidateAzureConfig(mysql.Spec.Deployment) {
 		r.Log.Info("Reconciling MySQL on Azure", "Mysql.ServerName", mysql.Spec.Deployment.ServerName)
 		// If Azure state doesn't indicate an error and hasn't been created, then create it
-		if !mysql.Status.AzureStatus.Created {
+		exists, err := util.ServerExists(ctx, mysql)
+		if err != nil {
+			r.Log.Error(err, "Could not retrieve server/s", "mysql.ServerName", *mysql.Spec.Deployment.ServerName)
+			mysql.Status.AzureStatus.State = cachev1alpha1.AzureError
+			_, _ = r.azureReconcileStatus(ctx, mysql)
+			return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
+		}
+
+		if !mysql.Status.AzureStatus.Created || mysql.Status.AzureStatus.State == cachev1alpha1.AzureError || !exists {
 			r.Log.Info("Mysql Azure instance creating, please wait", "mysql.ServerName", *mysql.Spec.Deployment.ServerName, "Config:", *mysql.Spec.Deployment.AzureConfig)
 			server, err := util.CreateServer(ctx, mysql)
 			if err != nil {
@@ -23,17 +31,32 @@ func (r *DBMMOMySQLReconciler) azureReconcileMysql(ctx context.Context, mysql *c
 				}
 				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 			}
-			//Update the status for future reference to the server
-			mysql.Status.AzureStatus.ServerInfo = cachev1alpha1.ServerInfo{
-				Tags:     server.Tags,
-				Location: server.Location,
-				ID:       server.ID,
-				Name:     server.Name,
-				Type:     server.Type,
-			}
 			mysql.Status.AzureStatus.State = cachev1alpha1.AzureCreated
 			mysql.Status.AzureStatus.Created = true
 
+			mysql.Status.AzureStatus.ServerInfo = cachev1alpha1.ServerInfo{
+				Tags:                       server.Tags,
+				Location:                   server.Location,
+				ID:                         server.ID,
+				Name:                       server.Name,
+				Type:                       server.Type,
+				AdministratorLogin:         server.ServerProperties.AdministratorLogin,
+				AdministratorLoginPassword: server.ServerProperties.AdministratorLoginPassword,
+				State:                      server.ServerProperties.State,
+				FullyQualifiedDomainName:   server.FullyQualifiedDomainName,
+				ReplicationRole:            server.ReplicationRole,
+				ReplicaCapacity:            server.ReplicaCapacity,
+				SourceServerID:             server.SourceServerID,
+				AvailabilityZone:           server.AvailabilityZone,
+			}
+			err = util.ConnectAndExec(*mysql.Spec.Deployment.TableStatement,
+				*mysql.Status.AzureStatus.ServerInfo.AdministratorLogin,
+				*mysql.Status.AzureStatus.ServerInfo.AdministratorLogin,
+				*mysql.Status.AzureStatus.ServerInfo.FullyQualifiedDomainName,
+				*mysql.Spec.Deployment.ServerName)
+			if err != nil {
+				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
+			}
 			// update the status to prevent next creation loop
 			if result, err := r.azureReconcileStatus(ctx, mysql); err != nil {
 				return result, err
