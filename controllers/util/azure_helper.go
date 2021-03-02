@@ -13,6 +13,7 @@ import (
 	"github.com/HubertStefanski/database-management-and-migration-operator/api/v1alpha1"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/constants"
 	_ "github.com/go-sql-driver/mysql"
+	k8serr "k8s.io/apimachinery/pkg/api/errors"
 )
 
 var (
@@ -32,29 +33,34 @@ func getServersClient(m *v1alpha1.DBMMOMySQL) mysql.ServersClient {
 	serversClient := mysql.NewServersClient(*m.Spec.Deployment.AzureConfig.SubscriptionID)
 	a, _ := GetResourceManagementAuthorizer(m)
 	serversClient.Authorizer = a
-	//_ = serversClient.AddToUserAgent(*m.Spec.Deployment.AzureConfig.UserAgent)
+	_ = serversClient.AddToUserAgent(*m.Spec.Deployment.AzureConfig.UserAgent)
 	return serversClient
 }
 
+//ServerExists returns a boolean flag whether a mysql server already exists for this subscriptionID
 func ServerExists(ctx context.Context, m *v1alpha1.DBMMOMySQL) (bool, error) {
 	server := getServersClient(m)
-	if res, err := server.Get(ctx, *m.Spec.Deployment.AzureConfig.BaseGroupName, *m.Spec.Deployment.ServerName); res.Response.StatusCode == 404 {
+	res, err := server.Get(ctx, *m.Spec.Deployment.AzureConfig.BaseGroupName, *m.Spec.Deployment.ServerName)
+	if k8serr.IsNotFound(err) || res.StatusCode == 404 {
 		return false, nil
-	} else if err != nil {
+	}
+	if err != nil {
 		return false, err
 	}
 	return true, nil
 
 }
 
+//GetServer returns the server corresponding to the currently deployed serverName
 func GetServer(ctx context.Context, m *v1alpha1.DBMMOMySQL) (mysql.Server, error) {
 	server := getServersClient(m)
-	if res, err := server.Get(ctx, *m.Spec.Deployment.AzureConfig.BaseGroupName, *m.Spec.Deployment.ServerName); res.Response.StatusCode == 404 {
+	res, err := server.Get(ctx, *m.Spec.Deployment.AzureConfig.BaseGroupName, *m.Spec.Deployment.ServerName)
+	if res.Response.StatusCode == 404 {
 		return res, nil
 	} else if err != nil {
 		return res, err
 	}
-	return mysql.Server{}, nil
+	return res, nil
 
 }
 
@@ -280,6 +286,7 @@ func getEnvironment() *azure.Environment {
 	return environment
 }
 
+//ConnectAndExec connects to a specified database and executes a query
 func ConnectAndExec(query, user, password, host, database string) error {
 	// Initialize connection string.
 	var connectionString = fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?allowNativePasswords=true", user, password, host, database)

@@ -52,7 +52,7 @@ type DBMMOMySQLReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	ctx = context.Background()
+	ctx = context.TODO()
 	log := r.Log.WithValues(constants.MysqlControllerName, req.NamespacedName)
 
 	// Fetch the Memcached instance
@@ -109,7 +109,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			if result, err := r.azureReconcileMysql(ctx, mysql); err != nil {
 				return result, err
 			}
-			if result, err := r.azureReconcileStatus(ctx, mysql); err != nil {
+			if result, err := r.azureReconcileStatus(ctx, mysql, nil); err != nil {
 				return result, err
 			}
 			// If the object is being deleted then delete all sub resources
