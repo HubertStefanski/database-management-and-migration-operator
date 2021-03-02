@@ -287,8 +287,12 @@ spec:
                           of the server.
                         type: string
                       fullyQualifiedDomainName:
-                        description: FullyQualifiedDomainName - READ-ONLY; The fully
-                          qualified domain name of a server.
+                        description: 'State - READ-ONLY; The state of a server. Possible
+                          values include: ''ServerStateReady'', ''ServerStateDropping'',
+                          ''ServerStateDisabled'', ''ServerStateStarting'', ''ServerStateStopping'',
+                          ''ServerStateStopped'', ''ServerStateUpdating'' State mysql.ServerState
+                          `json:"state,omitempty"` TODO REVISIT ME FullyQualifiedDomainName
+                          - READ-ONLY; The fully qualified domain name of a server.'
                         type: string
                       id:
                         description: ID - READ-ONLY; Fully qualified resource ID for
@@ -311,12 +315,6 @@ spec:
                         type: string
                       sourceServerId:
                         description: SourceServerID - The source MySQL server id.
-                        type: string
-                      state:
-                        description: 'State - READ-ONLY; The state of a server. Possible
-                          values include: ''ServerStateReady'', ''ServerStateDropping'',
-                          ''ServerStateDisabled'', ''ServerStateStarting'', ''ServerStateStopping'',
-                          ''ServerStateStopped'', ''ServerStateUpdating'''
                         type: string
                       tags:
                         additionalProperties:

@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	mysql "github.com/Azure/azure-sdk-for-go/services/preview/mysql/mgmt/2020-07-01-preview/mysqlflexibleservers"
 	"github.com/Azure/go-autorest/autorest/azure"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -116,7 +115,7 @@ type ServerInfo struct {
 	// AdministratorLoginPassword - The password of the administrator login (required for server creation).
 	AdministratorLoginPassword *string `json:"administratorLoginPassword,omitempty"`
 	// State - READ-ONLY; The state of a server. Possible values include: 'ServerStateReady', 'ServerStateDropping', 'ServerStateDisabled', 'ServerStateStarting', 'ServerStateStopping', 'ServerStateStopped', 'ServerStateUpdating'
-	State mysql.ServerState `json:"state,omitempty"`
+	//State mysql.ServerState `json:"state,omitempty"` TODO REVISIT ME
 	// FullyQualifiedDomainName - READ-ONLY; The fully qualified domain name of a server.
 	FullyQualifiedDomainName *string `json:"fullyQualifiedDomainName,omitempty"`
 	// ReplicationRole - The replication role.
