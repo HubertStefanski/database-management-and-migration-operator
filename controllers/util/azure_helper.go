@@ -33,7 +33,7 @@ func getServersClient(m *v1alpha1.DBMMOMySQL) mysql.ServersClient {
 	serversClient := mysql.NewServersClient(*m.Spec.Deployment.AzureConfig.SubscriptionID)
 	a, _ := GetResourceManagementAuthorizer(m)
 	serversClient.Authorizer = a
-	_ = serversClient.AddToUserAgent(*m.Spec.Deployment.AzureConfig.UserAgent)
+	//_ = serversClient.AddToUserAgent(*m.Spec.Deployment.AzureConfig.UserAgent)
 	return serversClient
 }
 
