@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/Azure/azure-sdk-for-go/profiles/preview/preview/mysql/mgmt/mysqlflexibleservers"
 
-	"github.com/Azure/go-autorest/autorest/to"
 	cachev1alpha1 "github.com/HubertStefanski/database-management-and-migration-operator/api/v1alpha1"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/constants"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/util"
@@ -26,8 +25,11 @@ func (r *DBMMOMySQLReconciler) azureReconcileMysql(ctx context.Context, mysql *c
 
 		if !mysql.Status.AzureStatus.Created {
 			r.Log.Info("Mysql Azure instance creating, please wait", "mysql.ServerName", *mysql.Spec.Deployment.ServerName, "Config:", *mysql.Spec.Deployment.AzureConfig)
+
 			server, err := util.CreateServer(ctx, mysql)
+
 			r.Log.Info("server", "server", server)
+
 			if err != nil {
 				if result, err := r.azureReconcileStatus(ctx, mysql, nil); err != nil {
 					return result, err
@@ -46,19 +48,24 @@ func (r *DBMMOMySQLReconciler) azureReconcileMysql(ctx context.Context, mysql *c
 		} else {
 			r.Log.Info("MySQL on Azure already exists, nothing to do", "Mysql.ServerName", *mysql.Spec.Deployment.ServerName)
 		}
+
 		// update the status to prevent next creation loop
 		if result, err := r.azureReconcileStatus(ctx, mysql, nil); err != nil {
 			return result, err
 		}
 		r.Log.Info("Executing query on Azure MySQL", "Mysql.ServerName", *mysql.Spec.Deployment.ServerName)
-		err := util.ConnectAndExec(*mysql.Spec.Deployment.TableStatement,
-			*mysql.Status.AzureStatus.ServerInfo.AdministratorLogin,
-			*mysql.Status.AzureStatus.ServerInfo.AdministratorLogin,
-			*mysql.Status.AzureStatus.ServerInfo.FullyQualifiedDomainName,
-			*mysql.Spec.Deployment.ServerName)
-		if err != nil {
-			return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
+
+		if mysql.Spec.Deployment.TableStatement != nil && *mysql.Spec.Deployment.TableStatement != "" {
+			err := util.ConnectAndExec(*mysql.Spec.Deployment.TableStatement,
+				constants.MysqlAdminUser,    //*mysql.Status.AzureStatus.ServerInfo.AdministratorLogin
+				constants.MysqlSecretEnvVal, //*mysql.Status.AzureStatus.ServerInfo.AdministratorLoginPassword
+				*mysql.Status.AzureStatus.ServerInfo.FullyQualifiedDomainName,
+				*mysql.Spec.Deployment.ServerName)
+			if err != nil {
+				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
+			}
 		}
+
 	} else {
 		r.Log.Error(fmt.Errorf("%v", "Spec.Deployment Azure field misconfiguration"), "ensure data is valid",
 			"Deployment", mysql.Spec.Deployment)
@@ -87,27 +94,30 @@ func (r *DBMMOMySQLReconciler) azureReconcileStatus(ctx context.Context, mysql *
 			SourceServerID:           server.SourceServerID,
 			AvailabilityZone:         server.AvailabilityZone,
 		}
-	} else {
-		srv, err := util.GetServer(ctx, mysql)
-		if err != nil {
-			return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
-		}
-
-		mysql.Status.AzureStatus.ServerInfo = cachev1alpha1.ServerInfo{
-			Tags:                       srv.Tags,
-			Location:                   srv.Location,
-			ID:                         srv.ID,
-			Name:                       srv.Name,
-			Type:                       srv.Type,
-			AdministratorLogin:         to.StringPtr(constants.MysqlAdminUser),
-			AdministratorLoginPassword: to.StringPtr(constants.MysqlSecretEnvVal),
-			//State:                      to.StringPtr(server.ServerProperties.State),
-			FullyQualifiedDomainName: srv.FullyQualifiedDomainName,
-			//ReplicationRole:          srv.ReplicationRole,
-			ReplicaCapacity:  srv.ReplicaCapacity,
-			SourceServerID:   srv.SourceServerID,
-			AvailabilityZone: srv.AvailabilityZone,
-		}
+		//} else {
+		//
+		//	srv, err := util.GetServer(ctx, mysql)
+		//	if err != nil {
+		//		return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
+		//	}
+		//
+		//	if srv != nil {
+		//		mysql.Status.AzureStatus.ServerInfo = cachev1alpha1.ServerInfo{
+		//			Tags:                       srv.Tags,
+		//			Location:                   srv.Location,
+		//			ID:                         srv.ID,
+		//			Name:                       srv.Name,
+		//			Type:                       srv.Type,
+		//			AdministratorLogin:         to.StringPtr(constants.MysqlAdminUser),
+		//			AdministratorLoginPassword: to.StringPtr(constants.MysqlSecretEnvVal),
+		//			//State:                      to.StringPtr(server.ServerProperties.State),
+		//			FullyQualifiedDomainName: srv.FullyQualifiedDomainName,
+		//			ReplicationRole:          srv.ReplicationRole,
+		//			ReplicaCapacity:          srv.ReplicaCapacity,
+		//			SourceServerID:           srv.SourceServerID,
+		//			AvailabilityZone:         srv.AvailabilityZone,
+		//		}
+		//	}
 	}
 	if err := r.Client.Status().Update(ctx, mysql); err != nil {
 		r.Log.Error(err, "Failed to update Mysql status", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)

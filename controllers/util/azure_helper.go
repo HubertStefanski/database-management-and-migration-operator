@@ -14,6 +14,7 @@ import (
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/constants"
 	_ "github.com/go-sql-driver/mysql"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var (
@@ -310,12 +311,19 @@ func ConnectAndExec(query, user, password, host, database string) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			log.Log.Error(err, "Cannot close db connection", "DB", db)
+		}
+	}(db)
 
 	err = db.Ping()
+	log.Log.Info("")
 	if err != nil {
 		return err
 	}
+	fmt.Println("Successfully connected to database")
 
 	_, err = db.Exec(query)
 	if err != nil {
