@@ -177,7 +177,7 @@ func (in *DBMMOMYSQLDeployment) DeepCopyInto(out *DBMMOMYSQLDeployment) {
 	}
 	if in.StorageCapacity != nil {
 		in, out := &in.StorageCapacity, &out.StorageCapacity
-		*out = new(int32)
+		*out = new(string)
 		**out = **in
 	}
 	if in.DeploymentType != nil {

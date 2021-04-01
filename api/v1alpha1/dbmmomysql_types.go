@@ -68,7 +68,7 @@ type AzureFwRule struct {
 type DBMMOMYSQLDeployment struct {
 	ServerName        *string            `json:"serverName,omitempty"`
 	ConfigurationName *string            `json:"configurationName,omitempty"`
-	StorageCapacity   *int32             `json:"storageCapacity,omitempty"`
+	StorageCapacity   *string            `json:"storageCapacity,omitempty"`
 	DeploymentType    *string            `json:"deploymentType,omitempty"`
 	EnvFrom           []v1.EnvFromSource `json:"envFrom,omitempty"`
 	ServerCredentials *MysqlCredentials  `json:"serverCredentials,omitempty"`
@@ -139,6 +139,7 @@ type DBMMOMySQLList struct {
 	Items           []DBMMOMySQL `json:"items"`
 }
 
+//MysqlCredentials represents the Mysql server credential configuration
 type MysqlCredentials struct {
 	MysqlAdministratorLogin         *string `json:"mysqlAdministratorLogin,omitempty"`
 	MysqlAdministratorLoginPassword *string `json:"mysqlAdministratorLoginPassword,omitempty"`

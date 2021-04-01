@@ -25,7 +25,7 @@ func GetMysqlPvc(m *cachev1alpha1.DBMMOMySQL) *corev1.PersistentVolumeClaim {
 			Resources: corev1.ResourceRequirements{
 				Limits: nil,
 				Requests: corev1.ResourceList{
-					"storage": resource.MustParse(constants.MysqlCapacityStorageTest),
+					"storage": resource.MustParse(getMysqlStorageSize(m)),
 				},
 			},
 			//TODO remove this after local development
@@ -35,6 +35,14 @@ func GetMysqlPvc(m *cachev1alpha1.DBMMOMySQL) *corev1.PersistentVolumeClaim {
 
 	// Set Mysql instance as the owner and controller
 	return pvc
+}
+
+func getMysqlStorageSize(m *cachev1alpha1.DBMMOMySQL) string {
+	if m.Spec.Deployment.StorageCapacity != nil {
+		return *m.Spec.Deployment.StorageCapacity
+	}
+	return constants.MysqlCapacityStorageTest // TODO change me after testing
+
 }
 
 // GetMysqlService returns the mysql service
