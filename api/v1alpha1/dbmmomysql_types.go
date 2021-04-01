@@ -71,6 +71,7 @@ type DBMMOMYSQLDeployment struct {
 	StorageCapacity   *int32             `json:"storageCapacity,omitempty"`
 	DeploymentType    *string            `json:"deploymentType,omitempty"`
 	EnvFrom           []v1.EnvFromSource `json:"envFrom,omitempty"`
+	ServerCredentials *MysqlCredentials  `json:"serverCredentials,omitempty"`
 	AzureConfig       *AzureConfig       `json:"azureConfig,omitempty"`
 }
 
@@ -136,6 +137,11 @@ type DBMMOMySQLList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []DBMMOMySQL `json:"items"`
+}
+
+type MysqlCredentials struct {
+	MysqlAdministratorLogin         *string `json:"mysqlAdministratorLogin,omitempty"`
+	MysqlAdministratorLoginPassword *string `json:"mysqlAdministratorLoginPassword,omitempty"`
 }
 
 func init() {
