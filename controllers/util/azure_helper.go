@@ -50,9 +50,9 @@ func CreateServer(ctx context.Context, m *v1alpha1.DBMMOMySQL) (server mysql.Ser
 				Tier: "GeneralPurpose",
 			},
 			ServerProperties: &mysql.ServerProperties{
-				AdministratorLogin:         to.StringPtr(constants.MysqlAdminUser),    //TODO replace me with cr field val
-				AdministratorLoginPassword: to.StringPtr(constants.MysqlSecretEnvVal), //TODO replace me with cr field val
-				Version:                    mysql.FiveFullStopSeven,                   // 5.7
+				AdministratorLogin:         getAdministratorLogin(m),
+				AdministratorLoginPassword: getAdministratorLoginPassword(m),
+				Version:                    mysql.FiveFullStopSeven, // 5.7
 				StorageProfile: &mysql.StorageProfile{
 					StorageMB: to.Int32Ptr(524288),
 				},
@@ -254,4 +254,19 @@ func getEnvironment() *azure.Environment {
 	}
 	environment = &env
 	return environment
+}
+
+func getAdministratorLogin(mysql *v1alpha1.DBMMOMySQL) *string {
+	if mysql.Spec.Deployment.ServerCredentials != nil && mysql.Spec.Deployment.ServerCredentials.MysqlAdministratorLogin != nil {
+		return mysql.Spec.Deployment.ServerCredentials.MysqlAdministratorLogin
+	}
+	return to.StringPtr(constants.MysqlAdminUser)
+
+}
+
+func getAdministratorLoginPassword(mysql *v1alpha1.DBMMOMySQL) *string {
+	if mysql.Spec.Deployment.ServerCredentials != nil && mysql.Spec.Deployment.ServerCredentials.MysqlAdministratorLoginPassword != nil {
+		return mysql.Spec.Deployment.ServerCredentials.MysqlAdministratorLoginPassword
+	}
+	return to.StringPtr(constants.MysqlSecretEnvVal)
 }
