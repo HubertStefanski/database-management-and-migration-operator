@@ -64,6 +64,7 @@ type AzureFwRule struct {
 	EndIPAddr        *string `json:"endIPAddr,omitempty"`
 }
 
+// DBMMOIngress defines the ingress configuration
 type DBMMOIngress struct {
 	Enabled *bool `json:"enabled,omitempty"`
 }
