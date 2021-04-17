@@ -64,8 +64,13 @@ type AzureFwRule struct {
 	EndIPAddr        *string `json:"endIPAddr,omitempty"`
 }
 
+type DBMMOIngress struct {
+	Enabled *bool `json:"enabled,omitempty"`
+}
+
 // DBMMOMYSQLDeployment defines the desired state of the mysqlDeployment
 type DBMMOMYSQLDeployment struct {
+	Ingress           *DBMMOIngress      `json:"ingress,omitempty"`
 	ServerName        *string            `json:"serverName,omitempty"`
 	ConfigurationName *string            `json:"configurationName,omitempty"`
 	StorageCapacity   *string            `json:"storageCapacity,omitempty"`

@@ -255,3 +255,11 @@ func (r *DBMMOMySQLReconciler) OnClusterCleanup(ctx context.Context, m *cachev1a
 	// Don't requeue if the cleanup was successful
 	return ctrl.Result{}, nil
 }
+
+func (r *DBMMOMySQLReconciler) cleanUpIngress(ctx context.Context, m *cachev1alpha1.DBMMOMySQL) (ctrl.Result, error) {
+	ingr := model.GetMysqlIngress(m)
+	if err := r.Client.Delete(ctx, ingr); err != nil && k8serr.IsNotFound(err) {
+		return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
+	}
+	return ctrl.Result{}, nil
+}

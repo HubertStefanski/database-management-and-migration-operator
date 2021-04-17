@@ -8,6 +8,8 @@ metadata:
 spec:
   size: 1
   deployment:
+    ingress:
+      enabled: False
     deploymentType: "OnCluster"
     envFrom:
       - secretRef:

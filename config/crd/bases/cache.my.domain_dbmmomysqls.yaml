@@ -225,6 +225,11 @@ spec:
                           type: object
                       type: object
                     type: array
+                  ingress:
+                    properties:
+                      enabled:
+                        type: boolean
+                    type: object
                   serverCredentials:
                     description: MysqlCredentials represents the Mysql server credential
                       configuration
