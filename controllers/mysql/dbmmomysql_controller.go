@@ -41,7 +41,6 @@ type DBMMOMySQLReconciler struct {
 // +kubebuilder:rbac:groups=cache.my.domain,resources=dbmmomysqls,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cache.my.domain,resources=dbmmomysqls/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cache.my.domain,resources=dbmmomysqls/finalizers,verbs=update
-
 func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	ctx = context.Background()
 	log := r.Log.WithValues(constants.MysqlControllerName, req.NamespacedName)
@@ -96,6 +95,14 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				return result, err
 			}
 
+			// wait for resources to be ready before updating status
+			ready, err := r.getCollectiveReadiness(ctx, mysql)
+			if err != nil {
+				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
+			}
+			if !ready {
+				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, nil
+			}
 			if result, err = r.onClusterReconcileMysqlStatus(ctx, mysql, listOpts); err != nil {
 				return result, err
 			}

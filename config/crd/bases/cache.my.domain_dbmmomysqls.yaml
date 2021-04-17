@@ -226,6 +226,7 @@ spec:
                       type: object
                     type: array
                   ingress:
+                    description: DBMMOIngress defines the ingress configuration
                     properties:
                       enabled:
                         type: boolean
