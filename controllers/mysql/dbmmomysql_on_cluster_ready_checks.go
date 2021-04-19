@@ -50,18 +50,6 @@ func (r *DBMMOMySQLReconciler) getPVReadiness(ctx context.Context, mysql *v1alph
 	return true, nil
 }
 
-func (r *DBMMOMySQLReconciler) getServiceReadiness(ctx context.Context, mysql *v1alpha1.DBMMOMySQL) (bool, error) {
-	service := model.GetMysqlService(mysql)
-	if err := r.Client.Get(ctx, types.NamespacedName{
-		Namespace: service.Namespace,
-		Name:      service.Name,
-	}, service); err != nil {
-		return false, err
-	}
-	return len(service.Status.LoadBalancer.Ingress) > 0, nil
-
-}
-
 func (r *DBMMOMySQLReconciler) getIngressReadiness(ctx context.Context, mysql *v1alpha1.DBMMOMySQL) (bool, error) {
 	ingress := model.GetMysqlIngress(mysql)
 	if err := r.Client.Get(ctx, types.NamespacedName{
@@ -97,15 +85,6 @@ func (r *DBMMOMySQLReconciler) getCollectiveReadiness(ctx context.Context, mysql
 		return false, fmt.Errorf("resource %s not ready", "Deployment")
 	}
 	r.Log.Info("Resource ready", "resource", "deployment")
-
-	ready, err = r.getServiceReadiness(ctx, mysql)
-	if err != nil {
-		return false, err
-	}
-	if ready != true {
-		return false, fmt.Errorf("resource %s not ready", "Service")
-	}
-	r.Log.Info("Resource ready", "resource", "service")
 
 	if mysql.Spec.Deployment.Ingress != nil && mysql.Spec.Deployment.Ingress.Enabled != nil && *mysql.Spec.Deployment.Ingress.Enabled != false {
 		ready, err = r.getIngressReadiness(ctx, mysql)
