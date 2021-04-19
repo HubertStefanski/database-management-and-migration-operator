@@ -3,10 +3,10 @@ package mysql
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/HubertStefanski/database-management-and-migration-operator/api/v1alpha1"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/model"
 	appsv1 "k8s.io/api/apps/v1"
+	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -69,32 +69,36 @@ func (r *DBMMOMySQLReconciler) getIngressReadiness(ctx context.Context, mysql *v
 func (r *DBMMOMySQLReconciler) getCollectiveReadiness(ctx context.Context, mysql *v1alpha1.DBMMOMySQL) (bool, error) {
 
 	ready, err := r.getPVReadiness(ctx, mysql)
+	if ready != true || k8serr.IsNotFound(err) {
+		r.Log.Info("NOT READY", "resource", "persistentVolume")
+		return false, nil
+	}
 	if err != nil {
 		return false, err
 	}
-	if ready != true {
-		return false, fmt.Errorf("resource %s not ready", "PersistentVolume")
-	}
-	r.Log.Info("Resource ready", "resource", "persistentVolume")
+	r.Log.Info("READY", "resource", "persistentVolume")
 
 	ready, err = r.getDeploymentReadiness(ctx, mysql)
+	if ready != true || k8serr.IsNotFound(err) {
+		r.Log.Info("NOT READY", "resource", "deployment")
+		return false, nil
+	}
 	if err != nil {
 		return false, err
 	}
-	if ready != true {
-		return false, fmt.Errorf("resource %s not ready", "Deployment")
-	}
-	r.Log.Info("Resource ready", "resource", "deployment")
+	r.Log.Info("READY", "resource", "deployment")
 
 	if mysql.Spec.Deployment.Ingress != nil && mysql.Spec.Deployment.Ingress.Enabled != nil && *mysql.Spec.Deployment.Ingress.Enabled != false {
 		ready, err = r.getIngressReadiness(ctx, mysql)
+
+		if ready != true || k8serr.IsNotFound(err) {
+			r.Log.Info("NOT READY", "resource", "ingress")
+			return false, nil
+		}
 		if err != nil {
 			return false, err
 		}
-		if ready != true {
-			return false, fmt.Errorf("resource %s not ready", "Ingress")
-		}
-		r.Log.Info("Resources %s ready", "resource", "ingress")
+		r.Log.Info("READY", "resource", "ingress")
 
 	}
 

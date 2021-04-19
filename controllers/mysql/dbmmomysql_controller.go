@@ -101,7 +101,8 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 			}
 			if !ready {
-				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, nil
+				// Give the resource some time to reach readiness
+				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelay}, nil
 			}
 			if result, err = r.onClusterReconcileMysqlStatus(ctx, mysql, listOpts); err != nil {
 				return result, err
