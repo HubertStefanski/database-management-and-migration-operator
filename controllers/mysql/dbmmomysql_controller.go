@@ -128,9 +128,6 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			if result, err = r.azureReconcileMysql(ctx, mysql); err != nil {
 				return result, err
 			}
-			if result, err = r.azureReconcileStatus(ctx, mysql); err != nil {
-				return result, err
-			}
 			// If the object is being deleted then delete all sub resources
 			if mysql.DeletionTimestamp != nil {
 				r.Log.Info("Detected deletion timestamp, starting cleanup", "mysql.Name", mysql.Name)

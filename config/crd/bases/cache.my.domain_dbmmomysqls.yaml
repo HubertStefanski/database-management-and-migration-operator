@@ -227,16 +227,16 @@ spec:
                           type: object
                       type: object
                     type: array
-                  initCMD:
-                    items:
-                      type: string
-                    type: array
                   ingress:
                     description: DBMMOIngress defines the ingress configuration
                     properties:
                       enabled:
                         type: boolean
                     type: object
+                  initCMD:
+                    items:
+                      type: string
+                    type: array
                   serverCredentials:
                     description: MysqlCredentials represents the Mysql server credential
                       configuration
@@ -249,8 +249,9 @@ spec:
                   serverName:
                     type: string
                   storageCapacity:
-                    format: int32
-                    type: integer
+                    type: string
+                  tableStatement:
+                    type: string
                 type: object
               size:
                 description: Size indicates the number of pods to be deployed

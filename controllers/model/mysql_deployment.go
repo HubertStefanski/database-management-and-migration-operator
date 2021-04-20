@@ -25,7 +25,7 @@ func GetMysqlInitCommand(m *v1alpha1.DBMMOMySQL) []string {
 	if m.Spec.Deployment.InitCMD != nil {
 		return *m.Spec.Deployment.InitCMD
 	}
-	return []string{""}
+	return []string{}
 }
 
 // MysqlDeploymentGetEnvFrom returns the environment variables contained within a secret

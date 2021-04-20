@@ -303,6 +303,7 @@ func getAdministratorLoginPassword(mysql *v1alpha1.DBMMOMySQL) *string {
 	return to.StringPtr(constants.MysqlSecretEnvVal)
 }
 
+// ConnectAndExec connects to the database and executes a query
 func ConnectAndExec(query, user, password, host, database string) error {
 	// Initialize connection string.
 	var connectionString = fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?allowNativePasswords=true", user, password, host, database)
