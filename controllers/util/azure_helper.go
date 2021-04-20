@@ -12,6 +12,7 @@ import (
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/HubertStefanski/database-management-and-migration-operator/api/v1alpha1"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/constants"
+	// v required by Azure
 	_ "github.com/go-sql-driver/mysql"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/log"
