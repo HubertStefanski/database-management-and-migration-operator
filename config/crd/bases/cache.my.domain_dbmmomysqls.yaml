@@ -190,6 +190,8 @@ spec:
                     type: object
                   configurationName:
                     type: string
+                  confirmMigrate:
+                    type: boolean
                   deploymentType:
                     type: string
                   envFrom:

@@ -18,6 +18,7 @@ package mysql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/constants"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/model"
@@ -73,18 +74,22 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if mysql.Spec.Deployment != nil && mysql.Spec.Deployment.DeploymentType != nil && *mysql.Spec.Deployment.DeploymentType != "" {
 		switch depType := *mysql.Spec.Deployment.DeploymentType; depType {
 		case constants.MysqlDeploymentTypeOnCluster:
+			// Check if Other type of deployment exists
+			if mysql.Status.AzureStatus.Created && mysql.Spec.Deployment.ConfirmMigrate != nil && !*mysql.Spec.Deployment.ConfirmMigrate {
+				return result, errors.New("detected Azure deployment but no migration has been confirmed, can't proceed")
+			}
 			if result, err = r.onClusterReconcileMysqlPVC(ctx, mysql); err != nil {
-				return result, err
+				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 			}
 
 			if result, err = r.onClusterReconcileMysqlService(ctx, mysql); err != nil {
-				return result, err
+				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 			}
 
 			// Only create ingress if directly specified to do so
 			if mysql.Spec.Deployment.Ingress != nil && mysql.Spec.Deployment.Ingress.Enabled != nil && *mysql.Spec.Deployment.Ingress.Enabled != false {
 				if result, err = r.onClusterReconcileIngress(ctx, mysql); err != nil {
-					return result, err
+					return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 				}
 			}
 
@@ -96,13 +101,13 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					}, mysql)) {
 					result, err = r.cleanUpIngress(ctx, mysql)
 					if err != nil {
-						return result, err
+						return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 					}
 				}
 			}
 
 			if result, err = r.onClusterReconcileMysqlDeployment(ctx, mysql); err != nil {
-				return result, err
+				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 			}
 
 			// wait for resources to be ready before updating status
@@ -114,13 +119,21 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				// Give the resource some time to reach readiness
 				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelay}, nil
 			}
+
 			if result, err = r.onClusterReconcileMysqlStatus(ctx, mysql, listOpts); err != nil {
-				return result, err
+				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 			}
-			// If the object is being deleted then delete all sub resources
+
+			// If migration has been confirmed or the resource is being deleted, then delete sub resources as well
 			if mysql.DeletionTimestamp != nil {
 				r.Log.Info("Detected deletion timestamp, starting cleanup", "mysql.Name", mysql.Name)
-				if result, err := r.OnClusterCleanup(ctx, mysql); err != nil {
+				if result, err = r.OnClusterCleanup(ctx, mysql); err != nil {
+					return result, err
+				}
+			}
+			if mysql.Status.AzureStatus.Created && mysql.Spec.Deployment.ConfirmMigrate != nil && *mysql.Spec.Deployment.ConfirmMigrate {
+				r.Log.Info("Migration completed, starting Azure cleanup", "mysql.Name", mysql.Name)
+				if result, err = r.azureCleanup(ctx, mysql); err != nil {
 					return result, err
 				}
 			}

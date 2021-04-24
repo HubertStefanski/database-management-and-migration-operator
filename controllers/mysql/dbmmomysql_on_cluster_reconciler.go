@@ -76,7 +76,7 @@ func (r *DBMMOMySQLReconciler) onClusterReconcileMysqlStatus(ctx context.Context
 		}
 	}
 	r.Log.Info("Reconciled Mysql status ", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
-	return ctrl.Result{Requeue: true}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *DBMMOMySQLReconciler) onClusterReconcileMysqlDeployment(ctx context.Context, mysql *cachev1alpha1.DBMMOMySQL) (ctrl.Result, error) {
