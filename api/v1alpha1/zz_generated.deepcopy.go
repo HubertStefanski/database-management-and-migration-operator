@@ -210,6 +210,11 @@ func (in *DBMMOMYSQLDeployment) DeepCopyInto(out *DBMMOMYSQLDeployment) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.ConfirmMigrate != nil {
+		in, out := &in.ConfirmMigrate, &out.ConfirmMigrate
+		*out = new(bool)
+		**out = **in
+	}
 	if in.EnvFrom != nil {
 		in, out := &in.EnvFrom, &out.EnvFrom
 		*out = make([]v1.EnvFromSource, len(*in))

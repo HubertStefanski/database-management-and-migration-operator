@@ -190,6 +190,8 @@ spec:
                     type: object
                   configurationName:
                     type: string
+                  confirmMigrate:
+                    type: boolean
                   deploymentType:
                     type: string
                   envFrom:
@@ -288,6 +290,8 @@ spec:
                         type: string
                     type: object
                 type: object
+              migrationInProgress:
+                type: boolean
               nodes:
                 items:
                   type: string

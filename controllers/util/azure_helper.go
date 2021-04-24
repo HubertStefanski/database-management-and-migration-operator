@@ -54,7 +54,7 @@ func CreateServer(ctx context.Context, m *v1alpha1.DBMMOMySQL) (server mysql.Ser
 				AdministratorLoginPassword: getAdministratorLoginPassword(m),
 				Version:                    mysql.FiveFullStopSeven, // 5.7
 				StorageProfile: &mysql.StorageProfile{
-					StorageMB: to.Int32Ptr(524288),
+					StorageMB: to.Int32Ptr(1024),
 				},
 			},
 		})

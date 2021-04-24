@@ -76,6 +76,7 @@ type DBMMOMYSQLDeployment struct {
 	ConfigurationName *string            `json:"configurationName,omitempty"`
 	StorageCapacity   *string            `json:"storageCapacity,omitempty"`
 	DeploymentType    *string            `json:"deploymentType,omitempty"`
+	ConfirmMigrate    *bool              `json:"confirmMigrate,omitempty"`
 	EnvFrom           []v1.EnvFromSource `json:"envFrom,omitempty"`
 	ServerCredentials *MysqlCredentials  `json:"serverCredentials,omitempty"`
 	AzureConfig       *AzureConfig       `json:"azureConfig,omitempty"`
@@ -121,6 +122,7 @@ type DBMMOMySQLStatus struct {
 	Nodes                  []string    `json:"nodes,omitempty"`
 	Services               []string    `json:"services,omitempty"`
 	PersistentVolumeClaims []string    `json:"persistentVolumeClaims,omitempty"`
+	MigrationInProgress    bool        `json:"migrationInProgress,omitempty"`
 	AzureStatus            AzureStatus `json:"azureStatus,omitempty"`
 }
 
