@@ -25,6 +25,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -84,13 +85,22 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			if mysql.Spec.Deployment.Ingress != nil && mysql.Spec.Deployment.Ingress.Enabled != nil && *mysql.Spec.Deployment.Ingress.Enabled != false {
 				if result, err = r.onClusterReconcileIngress(ctx, mysql); err != nil {
 					return result, err
-				} else if model.GetMysqlIngress(mysql) != nil && mysql.Spec.Deployment.Ingress.Enabled != nil && *mysql.Spec.Deployment.Ingress.Enabled != true { // If an ingress exists but is not enabled, delete it
+				}
+			}
+
+			if mysql.Spec.Deployment.Ingress != nil && mysql.Spec.Deployment.Ingress.Enabled != nil && *mysql.Spec.Deployment.Ingress.Enabled != true { // If an ingress exists but is not enabled, delete it
+				if !k8serr.IsNotFound(r.Client.Get(ctx,
+					types.NamespacedName{
+						Namespace: mysql.Namespace,
+						Name:      model.GetMysqlIngress(mysql).Name,
+					}, mysql)) {
 					result, err = r.cleanUpIngress(ctx, mysql)
 					if err != nil {
 						return result, err
 					}
 				}
 			}
+
 			if result, err = r.onClusterReconcileMysqlDeployment(ctx, mysql); err != nil {
 				return result, err
 			}

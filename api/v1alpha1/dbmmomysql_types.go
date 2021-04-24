@@ -121,6 +121,7 @@ type DBMMOMySQLStatus struct {
 	Nodes                  []string    `json:"nodes,omitempty"`
 	Services               []string    `json:"services,omitempty"`
 	PersistentVolumeClaims []string    `json:"persistentVolumeClaims,omitempty"`
+	MigrationInProgress    bool        `json:"migrationInProgress,omitempty"`
 	AzureStatus            AzureStatus `json:"azureStatus,omitempty"`
 }
 

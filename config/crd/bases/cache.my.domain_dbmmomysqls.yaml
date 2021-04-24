@@ -288,6 +288,8 @@ spec:
                         type: string
                     type: object
                 type: object
+              migrationInProgress:
+                type: boolean
               nodes:
                 items:
                   type: string
