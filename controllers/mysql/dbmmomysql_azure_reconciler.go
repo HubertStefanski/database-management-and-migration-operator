@@ -51,14 +51,14 @@ func (r *DBMMOMySQLReconciler) azureReconcileMysql(ctx context.Context, mysql *c
 }
 
 func (r *DBMMOMySQLReconciler) azureReconcileStatus(ctx context.Context, mysql *cachev1alpha1.DBMMOMySQL) (ctrl.Result, error) {
-	r.Log.Info("Reconciling Mysql Status", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
+	r.Log.Info("Reconciling MySQL on Azure status", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
 
 	if err := r.Client.Status().Update(ctx, mysql); err != nil {
 		r.Log.Error(err, "Failed to update Mysql status", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
 		return ctrl.Result{}, err
 	}
 
-	r.Log.Info("Reconciled Mysql status ", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
+	r.Log.Info("Reconciled MySQL on Azure status ", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
 	return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelay}, nil
 }
 

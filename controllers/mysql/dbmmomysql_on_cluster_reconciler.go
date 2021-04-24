@@ -35,7 +35,7 @@ func (r *DBMMOMySQLReconciler) onClusterReconcileMysqlStatus(ctx context.Context
 		err := r.Client.Status().Update(ctx, mysql)
 		if err != nil {
 			r.Log.Error(err, "Failed to update Mysql status", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
-			return ctrl.Result{}, err
+			return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 		}
 	}
 
@@ -44,7 +44,7 @@ func (r *DBMMOMySQLReconciler) onClusterReconcileMysqlStatus(ctx context.Context
 	serviceList := &corev1.ServiceList{}
 	if err := r.Client.List(ctx, serviceList, listOpts...); err != nil {
 		r.Log.Error(err, "Failed to list services", "Mysql.Namespace", mysql.Namespace, "Mysql.Name", mysql.Name)
-		return ctrl.Result{}, err
+		return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 	}
 	serviceNames := model.GetServiceNames(serviceList.Items)
 
@@ -130,7 +130,7 @@ func (r *DBMMOMySQLReconciler) onClusterReconcileMysqlDeployment(ctx context.Con
 	})
 	if err != nil {
 		r.Log.Error(err, "Failed to reconcile Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-		return ctrl.Result{}, err
+		return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 	}
 
 	r.Log.Info("Deployment reconciled", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
@@ -240,15 +240,15 @@ func (r *DBMMOMySQLReconciler) onClusterReconcileIngress(ctx context.Context, my
 //OnClusterCleanup cleans up the resources for a specific Mysql object
 func (r *DBMMOMySQLReconciler) OnClusterCleanup(ctx context.Context, m *cachev1alpha1.DBMMOMySQL) (ctrl.Result, error) {
 	pvc := model.GetMysqlPvc(m)
-	if err := r.Client.Delete(ctx, pvc); err != nil && k8serr.IsNotFound(err) {
+	if err := r.Client.Delete(ctx, pvc); err != nil && !k8serr.IsNotFound(err) {
 		return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 	}
 	svc := model.GetMysqlService(m)
-	if err := r.Client.Delete(ctx, svc); err != nil && k8serr.IsNotFound(err) {
+	if err := r.Client.Delete(ctx, svc); err != nil && !k8serr.IsNotFound(err) {
 		return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 	}
 	dep := model.GetMysqlDeployment(m)
-	if err := r.Client.Delete(ctx, dep); err != nil && k8serr.IsNotFound(err) {
+	if err := r.Client.Delete(ctx, dep); err != nil && !k8serr.IsNotFound(err) {
 		return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 	}
 
