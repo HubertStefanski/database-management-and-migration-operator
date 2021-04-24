@@ -29,11 +29,14 @@ This Operator is heavily ***Work In Progress*** as part of a final year project 
   TBA)
 - Local database management and provisioning for MySQL(on-cluster) accessible through service
 - Cloud database creation and deletion for Azure (partial configuration)
+- Database migration
+    - Azure -> OnCluster
 
 ## Planned functionality
 
-- Cloud database management and provisioning for Azure (to be expanded to GCP/AWS/etc in the future)
-- Data migration between environments (local-Azure / Azure-local etc.)
+- Database migration
+    - OnCluster -> Azure
+- Data migration between environments (OnCluster -> Azure / Azure -> OnCluster)
 - Expanded configuration for deployments (non-priority)
 - Table management
 
