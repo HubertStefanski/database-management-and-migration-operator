@@ -117,11 +117,11 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 			if !ready {
 				// Give the resource some time to reach readiness
-				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelay}, nil
+				return result, nil
 			}
 
 			if result, err = r.onClusterReconcileMysqlStatus(ctx, mysql, listOpts); err != nil {
-				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
+				return result, err
 			}
 
 			// If migration has been confirmed or the resource is being deleted, then delete sub resources as well
@@ -151,6 +151,20 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 					return result, err
 				}
 			}
+
+			if !k8serr.IsNotFound(r.Client.Get(ctx,
+				types.NamespacedName{
+					Namespace: mysql.Namespace,
+					Name:      model.GetMysqlDeployment(mysql).Name,
+				}, mysql)) && mysql.Status.AzureStatus.Created {
+				r.Log.Info("Migration completed, starting OnCluster cleanup", "mysql.Name", mysql.Name)
+				result, err := r.OnClusterCleanup(ctx, mysql)
+				if err != nil {
+					return result, err
+				}
+
+			}
+
 		default:
 			r.Log.Error(fmt.Errorf("%v", "Unrecognized deployment type"), "ensure correct spelling or supported type",
 				"DeploymentType", mysql.Spec.Deployment.DeploymentType)
