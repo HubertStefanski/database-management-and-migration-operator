@@ -31,11 +31,9 @@ This Operator is heavily ***Work In Progress*** as part of a final year project 
 - Cloud database creation and deletion for Azure (partial configuration)
 - Database migration
     - Azure -> OnCluster
+    - OnCluster -> Azure
 
 ## Planned functionality
-
-- Database migration
-    - OnCluster -> Azure
 - Data migration between environments (OnCluster -> Azure / Azure -> OnCluster)
 - Expanded configuration for deployments (non-priority)
 - Table management
