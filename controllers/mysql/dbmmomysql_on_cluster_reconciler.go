@@ -251,7 +251,6 @@ func (r *DBMMOMySQLReconciler) OnClusterCleanup(ctx context.Context, m *cachev1a
 	if err := r.Client.Delete(ctx, dep); err != nil && !k8serr.IsNotFound(err) {
 		return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 	}
-
 	// Don't requeue if the cleanup was successful
 	return ctrl.Result{}, nil
 }

@@ -74,6 +74,7 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if mysql.Spec.Deployment != nil && mysql.Spec.Deployment.DeploymentType != nil && *mysql.Spec.Deployment.DeploymentType != "" {
 		switch depType := *mysql.Spec.Deployment.DeploymentType; depType {
 		case constants.MysqlDeploymentTypeOnCluster:
+
 			// Check if Other type of deployment exists
 			if mysql.Status.AzureStatus.Created && mysql.Spec.Deployment.ConfirmMigrate != nil && !*mysql.Spec.Deployment.ConfirmMigrate {
 				return result, errors.New("detected Azure deployment but no migration has been confirmed, can't proceed")
@@ -152,15 +153,15 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				}
 			}
 
-			if !k8serr.IsNotFound(r.Client.Get(ctx,
-				types.NamespacedName{
-					Namespace: mysql.Namespace,
-					Name:      model.GetMysqlDeployment(mysql).Name,
-				}, mysql)) && mysql.Status.AzureStatus.Created {
+			if mysql.Status.Nodes != nil && mysql.Status.AzureStatus.Created && mysql.Spec.Deployment.ConfirmMigrate != nil && *mysql.Spec.Deployment.ConfirmMigrate {
 				r.Log.Info("Migration completed, starting OnCluster cleanup", "mysql.Name", mysql.Name)
 				result, err := r.OnClusterCleanup(ctx, mysql)
 				if err != nil {
 					return result, err
+				}
+				res, err := r.onClusterReconcileMysqlStatus(ctx, mysql, listOpts)
+				if err != nil {
+					return res, err
 				}
 
 			}
