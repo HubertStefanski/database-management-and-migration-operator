@@ -18,7 +18,6 @@ package mysql
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/constants"
 	"github.com/HubertStefanski/database-management-and-migration-operator/controllers/model"
@@ -75,10 +74,6 @@ func (r *DBMMOMySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		switch depType := *mysql.Spec.Deployment.DeploymentType; depType {
 		case constants.MysqlDeploymentTypeOnCluster:
 
-			// Check if Other type of deployment exists
-			if mysql.Status.AzureStatus.Created && mysql.Spec.Deployment.ConfirmMigrate != nil && !*mysql.Spec.Deployment.ConfirmMigrate {
-				return result, errors.New("detected Azure deployment but no migration has been confirmed, can't proceed")
-			}
 			if result, err = r.onClusterReconcileMysqlPVC(ctx, mysql); err != nil {
 				return ctrl.Result{RequeueAfter: constants.ReconcilerRequeueDelayOnFail}, err
 			}
