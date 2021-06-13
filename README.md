@@ -16,9 +16,7 @@ The Operator Image can be found at :
 
 ## (Warning)
 
-This Operator is heavily ***Work In Progress*** as part of a final year project for my bachelors computing degree.
-(I cannot accept outside help for the near future). However, feel free to fork/clone this repo to your hearts content.
-
+This Operator is heavily ***Work In Progress*** as part of a final year project for my bachelors computing degree. Use at your own risk, but feel free to contribute features, bug fixes or fork it for your own use!
 ## Overview
 
 ![Operator Overview](documentation/images/operator-overview.png)
